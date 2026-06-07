@@ -10,65 +10,93 @@ class CreateWithAiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.all(homeSpaceLg),
       decoration: BoxDecoration(
         color: kCardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0F000000)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(homeRadiusLg),
+        border: Border.all(color: kBorderLight),
+        boxShadow: homeCardShadow,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: kBlueBg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Image.asset(
-                '$homeIconPath/Vector-1.png',
-                width: 18,
-                height: 18,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Create with AI',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: kTextBlack,
-                    fontFamily: 'Poppins',
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: kMintBg,
+                  borderRadius: BorderRadius.circular(homeRadiusMd),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    '$homeIconPath/Vector-1.png',
+                    width: 20,
+                    height: 20,
+                    fit: BoxFit.contain,
+                    semanticLabel: 'AI creation',
                   ),
                 ),
-                SizedBox(height: 2),
-                Text(
-                  'Caption · Image · Video · Motion',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 10, color: Color(0xb2000000)),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Create with AI',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: kTextBlack,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Caption, image, video, or motion post',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: kTextGrey,
+                        fontFamily: 'Poppins',
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          HomeActionButton.primary(label: '+ New Post', onPressed: () {}),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: HomeActionButton.primary(
+                  label: '+ New Post',
+                  onPressed: () {},
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton.outlined(
+                onPressed: () {},
+                icon: const Icon(Icons.auto_awesome_rounded),
+                tooltip: 'Open AI tools',
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  foregroundColor: kMint,
+                  side: const BorderSide(color: kBorderLight),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(homeRadiusMd),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

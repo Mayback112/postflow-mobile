@@ -33,10 +33,13 @@ class _HomePageState extends State<HomePage> {
         onClose: _closeSideNav,
         onItemSelected: (_) => _closeSideNav(),
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: homePageMaxWidth),
-              child: Column(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isLandscape =
+                  MediaQuery.orientationOf(context) == Orientation.landscape;
+              final isWide = constraints.maxWidth >= 700 || isLandscape;
+
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Padding(
@@ -46,37 +49,49 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _HomeEntry(
-                            index: 0,
-                            child: UpcomingPostCard(post: upcomingPost),
-                          ),
-                          SizedBox(height: 16),
-                          _HomeEntry(index: 1, child: CreateWithAiCard()),
-                          SizedBox(height: 16),
-                          _HomeEntry(
-                            index: 2,
-                            child: ConnectedPlatformsCard(
-                              platforms: connectedPlatforms,
-                            ),
-                          ),
-                          SizedBox(height: 20),
-                          _HomeEntry(
-                            index: 3,
-                            child: SchedulesSection(schedules: schedules),
-                          ),
-                          SizedBox(height: 24),
-                        ],
-                      ),
+                      child: _HomeContent(isWide: isWide),
                     ),
                   ),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HomeContent extends StatelessWidget {
+  final bool isWide;
+
+  const _HomeContent({required this.isWide});
+
+  @override
+  Widget build(BuildContext context) {
+    const content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _HomeEntry(index: 0, child: UpcomingPostCard(post: upcomingPost)),
+        SizedBox(height: 16),
+        _HomeEntry(index: 1, child: CreateWithAiCard()),
+        SizedBox(height: 16),
+        _HomeEntry(
+          index: 2,
+          child: ConnectedPlatformsCard(platforms: connectedPlatforms),
+        ),
+        SizedBox(height: 20),
+        _HomeEntry(index: 3, child: SchedulesSection(schedules: schedules)),
+        SizedBox(height: 24),
+      ],
+    );
+
+    if (isWide) return content;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: homePageMaxWidth),
+        child: content,
       ),
     );
   }

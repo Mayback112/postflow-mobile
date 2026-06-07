@@ -11,18 +11,12 @@ class ConnectedPlatformsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.all(homeSpaceLg),
       decoration: BoxDecoration(
         color: kCardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0F000000)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(homeRadiusLg),
+        border: Border.all(color: kBorderLight),
+        boxShadow: homeSoftShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,13 +30,33 @@ class ConnectedPlatformsCard extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Connected platforms',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: kTextBlack,
-                  fontFamily: 'Poppins',
+              const Expanded(
+                child: Text(
+                  'Connected platforms',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: kTextBlack,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {},
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  foregroundColor: kBlue,
+                ),
+                child: const Text(
+                  'Manage',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Poppins',
+                  ),
                 ),
               ),
             ],
@@ -69,31 +83,71 @@ class _PlatformChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      constraints: const BoxConstraints(minHeight: 38),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: kPillBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0x0A2C90E3)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080F6DB1),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+        boxShadow: homeSoftShadow,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PlatformLogo(label: label),
+          const SizedBox(width: 7),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              color: kTextMuted,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+            ),
           ),
         ],
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 13,
-          color: kTextMuted,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Poppins',
-        ),
-      ),
     );
+  }
+}
+
+class _PlatformLogo extends StatelessWidget {
+  final String label;
+
+  const _PlatformLogo({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final assetPath = _platformAssetPath(label);
+
+    if (assetPath == null) {
+      return const Icon(Icons.public_rounded, size: 18, color: kBlueDark);
+    }
+
+    return Image.asset(
+      assetPath,
+      width: 18,
+      height: 18,
+      fit: BoxFit.contain,
+      semanticLabel: '$label logo',
+    );
+  }
+
+  String? _platformAssetPath(String label) {
+    switch (label.toLowerCase()) {
+      case 'instagram':
+        return '$homeIconPath/platform_instagram_home.png';
+      case 'tiktok':
+        return '$homeIconPath/platform_tiktok_home.png';
+      case 'youtube':
+        return '$homeIconPath/platform_youtube_home.png';
+      case 'linkedin':
+        return '$homeIconPath/platform_linkedin_home.png';
+      default:
+        return null;
+    }
   }
 }

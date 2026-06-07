@@ -27,7 +27,7 @@ class HomeActionButton extends StatelessWidget {
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
-        minimumSize: const Size(44, 44),
+        minimumSize: const Size(48, 48),
         tapTargetSize: MaterialTapTargetSize.padded,
         padding: EdgeInsets.symmetric(
           horizontal: isPrimary ? 16 : 4,
@@ -36,12 +36,12 @@ class HomeActionButton extends StatelessWidget {
         backgroundColor: isPrimary ? kBlue : Colors.transparent,
         foregroundColor: kBlue,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(isPrimary ? 8 : 6),
+          borderRadius: BorderRadius.circular(isPrimary ? 10 : 6),
         ),
         textStyle: TextStyle(
-          fontSize: isPrimary ? 12 : 15,
+          fontSize: isPrimary ? 13 : 15,
           fontWeight: FontWeight.w700,
-          fontFamily: 'Epilogue',
+          fontFamily: 'Poppins',
         ),
       ),
       child: Text(

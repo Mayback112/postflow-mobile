@@ -9,12 +9,18 @@ class ScheduleItem {
   final String subtitle;
   final String date;
   final String time;
+  final String platform;
+  final String status;
+  final String contentType;
 
   const ScheduleItem({
     required this.title,
     required this.subtitle,
     required this.date,
     required this.time,
+    this.platform = 'Instagram',
+    this.status = 'Queued',
+    this.contentType = 'Post',
   });
 }
 
