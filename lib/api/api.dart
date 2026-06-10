@@ -8,7 +8,13 @@ import 'package:postflow/api/api_exception.dart';
 enum ApiEndpoint {
   authSign('/mobile/auth/sign'),
   authTest('/mobile/auth/test'),
-  authRefresh('/mobile/auth/refresh');
+  authRefresh('/mobile/auth/refresh'),
+  authMe('/mobile/auth/me'),
+  workspaces('/mobile/workspaces'),
+  socialAccounts('/mobile/social-accounts'),
+  socialZernioConnect('/mobile/social-accounts/zernio/connect'),
+  socialZernioConnectStatus('/mobile/social-accounts/zernio/connect-status'),
+  socialZernioSync('/mobile/social-accounts/zernio/sync');
 
   const ApiEndpoint(this.path);
 
@@ -21,7 +27,8 @@ class Api {
   static final Uri baseUri = Uri.parse(
     const String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:4000',
+      defaultValue:
+          'https://nonrepudiable-richie-nonceremonious.ngrok-free.dev',
     ),
   );
 
@@ -29,6 +36,13 @@ class Api {
     ApiEndpoint.authSign: '/mobile/auth/sign',
     ApiEndpoint.authTest: '/mobile/auth/test',
     ApiEndpoint.authRefresh: '/mobile/auth/refresh',
+    ApiEndpoint.authMe: '/mobile/auth/me',
+    ApiEndpoint.workspaces: '/mobile/workspaces',
+    ApiEndpoint.socialAccounts: '/mobile/social-accounts',
+    ApiEndpoint.socialZernioConnect: '/mobile/social-accounts/zernio/connect',
+    ApiEndpoint.socialZernioConnectStatus:
+        '/mobile/social-accounts/zernio/connect-status',
+    ApiEndpoint.socialZernioSync: '/mobile/social-accounts/zernio/sync',
   };
 
   static Uri uri(ApiEndpoint endpoint, {Map<String, dynamic>? query}) {
@@ -102,6 +116,38 @@ class ApiClient {
     return decodedBody;
   }
 
+  Future<Map<String, dynamic>> getJson(
+    ApiEndpoint endpoint, {
+    Map<String, dynamic>? query,
+    String? accessToken,
+  }) async {
+    final requestUri = uri(endpoint, query: query);
+    if (kDebugMode) {
+      debugPrint('API GET $requestUri');
+    }
+
+    final response = await _getWithLocalEmulatorFallback(
+      requestUri,
+      accessToken: accessToken,
+    );
+
+    if (kDebugMode) {
+      debugPrint(
+        'API ${response.statusCode} ${response.request?.url ?? requestUri}',
+      );
+    }
+
+    final decodedBody = _decodeResponse(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        decodedBody['message'] as String? ?? 'Request failed',
+        statusCode: response.statusCode,
+      );
+    }
+
+    return decodedBody;
+  }
+
   Future<http.Response> _postWithLocalEmulatorFallback(
     Uri requestUri,
     Map<String, dynamic>? body, {
@@ -120,6 +166,23 @@ class ApiClient {
     }
   }
 
+  Future<http.Response> _getWithLocalEmulatorFallback(
+    Uri requestUri, {
+    String? accessToken,
+  }) async {
+    try {
+      return await _get(requestUri, accessToken: accessToken);
+    } on TimeoutException {
+      final fallbackUri = _localAndroidFallbackUri(requestUri);
+      if (fallbackUri == null) rethrow;
+
+      if (kDebugMode) {
+        debugPrint('API retry $fallbackUri');
+      }
+      return _get(fallbackUri, accessToken: accessToken);
+    }
+  }
+
   Future<http.Response> _post(
     Uri requestUri,
     Map<String, dynamic>? body, {
@@ -131,7 +194,13 @@ class ApiClient {
           headers: Api.jsonHeaders(accessToken: accessToken),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(const Duration(seconds: 8));
+        .timeout(const Duration(seconds: 20));
+  }
+
+  Future<http.Response> _get(Uri requestUri, {String? accessToken}) {
+    return _client
+        .get(requestUri, headers: Api.jsonHeaders(accessToken: accessToken))
+        .timeout(const Duration(seconds: 20));
   }
 
   Uri? _localAndroidFallbackUri(Uri requestUri) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:postflow/components/app_empty_state.dart';
 import 'package:postflow/models/home_models.dart';
 import 'package:postflow/screen/home/widgets/home_action_button.dart';
 import 'package:postflow/theme/home_theme.dart';
@@ -61,12 +62,23 @@ class _CalendarSchedulesSectionState extends State<CalendarSchedulesSection> {
           onSortSelected: (option) => setState(() => _sortOption = option),
         ),
         const SizedBox(height: 12),
-        ..._sortedSchedules.map(
-          (schedule) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: CalendarScheduleCard(schedule: schedule),
+        if (_sortedSchedules.isEmpty)
+          AppEmptyState(
+            icon: Icons.calendar_month_rounded,
+            title: 'Nothing on this day',
+            message:
+                'No posts are scheduled for the selected date. Create a post to fill the calendar.',
+            primaryLabel: 'Create post',
+            onPrimaryPressed: () =>
+                Navigator.of(context).pushNamed('/CreateWithAi'),
+          )
+        else
+          ..._sortedSchedules.map(
+            (schedule) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: CalendarScheduleCard(schedule: schedule),
+            ),
           ),
-        ),
       ],
     );
   }

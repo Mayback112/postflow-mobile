@@ -4,20 +4,24 @@ import 'package:postflow/models/auth_models.dart';
 import 'package:postflow/services/auth_service.dart';
 import 'package:postflow/services/auth_token_storage.dart';
 import 'package:postflow/services/native_auth_token_provider.dart';
+import 'package:postflow/services/workspace_service.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({
     AuthService? authService,
     AuthTokenStorage? tokenStorage,
     NativeAuthTokenProvider? nativeAuthTokenProvider,
+    WorkspaceService? workspaceService,
   }) : _authService = authService ?? AuthService(),
        _tokenStorage = tokenStorage ?? AuthTokenStorage(),
        _nativeAuthTokenProvider =
-           nativeAuthTokenProvider ?? NativeAuthTokenProvider();
+           nativeAuthTokenProvider ?? NativeAuthTokenProvider(),
+       _workspaceService = workspaceService ?? WorkspaceService();
 
   final AuthService _authService;
   final AuthTokenStorage _tokenStorage;
   final NativeAuthTokenProvider _nativeAuthTokenProvider;
+  final WorkspaceService _workspaceService;
 
   AuthUser? _user;
   bool _isLoading = false;
@@ -93,6 +97,10 @@ class AuthController extends ChangeNotifier {
     return _tokenStorage.readAccessToken();
   }
 
+  Future<AuthUser?> storedUser() {
+    return _tokenStorage.readUser();
+  }
+
   Future<void> signOut() async {
     await _tokenStorage.clear();
     _user = null;
@@ -138,10 +146,11 @@ class AuthController extends ChangeNotifier {
     if (kDebugMode) {
       debugPrint('AUTH saving tokens');
     }
-    await _tokenStorage.save(session.tokens);
+    await _tokenStorage.saveSession(session);
     if (kDebugMode) {
       debugPrint('AUTH tokens saved');
     }
+    await _workspaceService.ensureSelectedWorkspace();
     _user = session.user;
     _isLoading = false;
     _errorMessage = null;

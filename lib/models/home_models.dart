@@ -20,9 +20,9 @@ class ScheduleItem {
     required this.date,
     required this.time,
     required this.imageUrl,
-    this.platform = 'Instagram',
-    this.status = 'Queued',
-    this.contentType = 'Post',
+    this.platform = '',
+    this.status = '',
+    this.contentType = '',
   });
 }
 

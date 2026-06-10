@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:postflow/models/auth_models.dart';
+import 'package:postflow/services/auth_token_storage.dart';
 import 'package:postflow/theme/home_theme.dart';
 
 const kDivider = Color(0xffe1e4e5);
@@ -79,11 +81,13 @@ class SideNav extends StatefulWidget {
 
 class _SideNavState extends State<SideNav> {
   late int _active;
+  AuthUser? _user;
 
   @override
   void initState() {
     super.initState();
     _active = widget.activeIndex;
+    _loadUser();
   }
 
   @override
@@ -103,8 +107,14 @@ class _SideNavState extends State<SideNav> {
 
     final currentRoute = ModalRoute.of(context)?.settings.name;
     if (currentRoute != routeName) {
-      Navigator.of(context).pushReplacementNamed(routeName);
+      Navigator.of(context).pushNamed(routeName);
     }
+  }
+
+  Future<void> _loadUser() async {
+    final user = await AuthTokenStorage().readUser();
+    if (!mounted) return;
+    setState(() => _user = user);
   }
 
   @override
@@ -164,70 +174,38 @@ class _SideNavState extends State<SideNav> {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 31,
-                        backgroundColor: kBlue,
-                        child: Padding(
-                          padding: const EdgeInsets.all(2),
-                          child: ClipOval(
-                            child: Image.network(
-                              'https://i.pravatar.cc/150?img=12',
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      _SideNavAvatar(user: _user),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Bernard Obeng Akoto',
+                            Text(
+                              _displayName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.left,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: kTextBlack,
                                 fontFamily: 'Poppins',
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  constraints: const BoxConstraints(
-                                    minHeight: 28,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: kBlueBg,
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: const Text(
-                                    'Pro plan',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: kBlue,
-                                      fontFamily: 'Poppins',
-                                    ),
-                                  ),
+                            if (_user?.email.isNotEmpty == true) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                _user!.email,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.left,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: kTextGrey,
+                                  fontFamily: 'Poppins',
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -273,6 +251,73 @@ class _SideNavState extends State<SideNav> {
         ),
       ),
     );
+  }
+
+  String get _displayName {
+    final name = _user?.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+
+    final email = _user?.email.trim();
+    if (email != null && email.isNotEmpty) return email;
+
+    return 'Account';
+  }
+}
+
+class _SideNavAvatar extends StatelessWidget {
+  final AuthUser? user;
+
+  const _SideNavAvatar({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = user?.profileImageUrl;
+    final initials = _initialsFor(user);
+
+    return CircleAvatar(
+      radius: 31,
+      backgroundColor: kBlue,
+      child: imageUrl == null || imageUrl.isEmpty
+          ? Text(
+              initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                fontFamily: 'Poppins',
+              ),
+            )
+          : ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: 62,
+                height: 62,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Text(
+                  initials,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  String _initialsFor(AuthUser? user) {
+    final name = user?.name?.trim();
+    if (name != null && name.isNotEmpty) {
+      final parts = name.split(RegExp(r'\s+'));
+      return parts.take(2).map((part) => part[0].toUpperCase()).join();
+    }
+
+    final email = user?.email.trim();
+    if (email != null && email.isNotEmpty) return email[0].toUpperCase();
+
+    return '?';
   }
 }
 
@@ -445,7 +490,7 @@ class _SideNavFooter extends StatelessWidget {
                   onClose?.call();
                   final currentRoute = ModalRoute.of(context)?.settings.name;
                   if (currentRoute != '/CreateManual') {
-                    Navigator.of(context).pushReplacementNamed('/CreateManual');
+                    Navigator.of(context).pushNamed('/CreateManual');
                   }
                 },
                 icon: const Icon(Icons.auto_awesome_rounded, size: 18),

@@ -28,6 +28,15 @@ class AuthUser {
       profileImageUrl: json['profileImageUrl'] as String?,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'name': name,
+      'profileImageUrl': profileImageUrl,
+    };
+  }
 }
 
 class AuthTokens {

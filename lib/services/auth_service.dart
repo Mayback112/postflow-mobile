@@ -25,4 +25,12 @@ class AuthService {
     });
     return AuthSession.fromJson(response);
   }
+
+  Future<AuthUser> me(String accessToken) async {
+    final response = await _apiClient.getJson(
+      ApiEndpoint.authMe,
+      accessToken: accessToken,
+    );
+    return AuthUser.fromJson(response['user'] as Map<String, dynamic>);
+  }
 }
