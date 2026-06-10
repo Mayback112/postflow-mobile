@@ -49,9 +49,11 @@ class HomeTopBar extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          const _HeaderIconButton(
+          _HeaderIconButton(
             assetPath: '$homeIconPath/notification-bell-new_svgrepo.com.png',
             size: 19,
+            badgeLabel: '3',
+            onTap: () => Navigator.of(context).pushNamed('/Notifications'),
           ),
           const SizedBox(width: 10),
           _HeaderIconButton(
@@ -68,11 +70,13 @@ class HomeTopBar extends StatelessWidget {
 class _HeaderIconButton extends StatelessWidget {
   final String assetPath;
   final double size;
+  final String? badgeLabel;
   final VoidCallback? onTap;
 
   const _HeaderIconButton({
     required this.assetPath,
     required this.size,
+    this.badgeLabel,
     this.onTap,
   });
 
@@ -99,13 +103,45 @@ class _HeaderIconButton extends StatelessWidget {
                 ),
               ],
             ),
-            child: Center(
-              child: Image.asset(
-                assetPath,
-                width: size,
-                height: size,
-                fit: BoxFit.contain,
-              ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Center(
+                  child: Image.asset(
+                    assetPath,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                if (badgeLabel != null)
+                  Positioned(
+                    right: -5,
+                    top: -5,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: kBlue,
+                        border: Border.all(color: Colors.white, width: 2),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        badgeLabel!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

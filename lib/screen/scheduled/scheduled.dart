@@ -1,38 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:postflow/models/home_models.dart';
+import 'package:postflow/screen/home/home_data.dart';
+import 'package:postflow/screen/home/widgets/home_action_button.dart';
+import 'package:postflow/screen/navigation/side_nav_overlay.dart';
 import 'package:postflow/theme/home_theme.dart';
 
-import 'home_action_button.dart';
+enum _ScheduledFilter { all, queued, draft, posted }
 
-enum _ScheduleSortOption { date, time, title }
+enum _ScheduledSort { date, time, title }
 
-class SchedulesSection extends StatefulWidget {
-  final List<ScheduleItem> schedules;
-
-  const SchedulesSection({super.key, required this.schedules});
+class ScheduledScreen extends StatefulWidget {
+  const ScheduledScreen({super.key});
 
   @override
-  State<SchedulesSection> createState() => _SchedulesSectionState();
+  State<ScheduledScreen> createState() => _ScheduledScreenState();
 }
 
-class _SchedulesSectionState extends State<SchedulesSection> {
-  _ScheduleSortOption _sortOption = _ScheduleSortOption.date;
+class _ScheduledScreenState extends State<ScheduledScreen> {
+  bool _isSideNavOpen = false;
+  _ScheduledFilter _filter = _ScheduledFilter.all;
+  _ScheduledSort _sort = _ScheduledSort.date;
 
-  List<ScheduleItem> get _sortedSchedules {
-    final sorted = [...widget.schedules];
+  void _openSideNav() => setState(() => _isSideNavOpen = true);
 
-    switch (_sortOption) {
-      case _ScheduleSortOption.date:
-        sorted.sort((a, b) => a.date.compareTo(b.date));
-      case _ScheduleSortOption.time:
-        sorted.sort((a, b) => _timeValue(a.time).compareTo(_timeValue(b.time)));
-      case _ScheduleSortOption.title:
-        sorted.sort(
+  void _closeSideNav() => setState(() => _isSideNavOpen = false);
+
+  List<ScheduleItem> get _visibleSchedules {
+    final filtered = schedules.where((schedule) {
+      return switch (_filter) {
+        _ScheduledFilter.all => true,
+        _ScheduledFilter.queued => schedule.status.toLowerCase() == 'queued',
+        _ScheduledFilter.draft => schedule.status.toLowerCase() == 'draft',
+        _ScheduledFilter.posted => schedule.status.toLowerCase() == 'posted',
+      };
+    }).toList();
+
+    switch (_sort) {
+      case _ScheduledSort.date:
+        filtered.sort((a, b) => a.date.compareTo(b.date));
+      case _ScheduledSort.time:
+        filtered.sort(
+          (a, b) => _timeValue(a.time).compareTo(_timeValue(b.time)),
+        );
+      case _ScheduledSort.title:
+        filtered.sort(
           (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
         );
     }
 
-    return sorted;
+    return filtered;
   }
 
   int _timeValue(String time) {
@@ -53,18 +69,195 @@ class _SchedulesSectionState extends State<SchedulesSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SideNavOverlay(
+        isOpen: _isSideNavOpen,
+        activeIndex: 2,
+        onClose: _closeSideNav,
+        onItemSelected: (_) => _closeSideNav(),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isLandscape =
+                  MediaQuery.orientationOf(context) == Orientation.landscape;
+              final isWide = constraints.maxWidth >= 700 || isLandscape;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _ScheduledTopBar(onMenuTap: _openSideNav),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                      child: _ScheduledContent(
+                        isWide: isWide,
+                        schedules: _visibleSchedules,
+                        activeFilter: _filter,
+                        activeSort: _sort,
+                        onFilterSelected: (filter) =>
+                            setState(() => _filter = filter),
+                        onSortSelected: (sort) => setState(() => _sort = sort),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScheduledTopBar extends StatelessWidget {
+  final VoidCallback onMenuTap;
+
+  const _ScheduledTopBar({required this.onMenuTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Scheduled',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: kTextBlack,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: onMenuTap,
+            icon: Image.asset(
+              '$homeIconPath/heroicons-solid_menu-alt-3.png',
+              width: 19,
+              height: 19,
+              fit: BoxFit.contain,
+            ),
+            tooltip: 'Open navigation menu',
+            style: IconButton.styleFrom(
+              minimumSize: const Size(48, 48),
+              backgroundColor: kPillBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(homeRadiusMd),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduledContent extends StatelessWidget {
+  final bool isWide;
+  final List<ScheduleItem> schedules;
+  final _ScheduledFilter activeFilter;
+  final _ScheduledSort activeSort;
+  final ValueChanged<_ScheduledFilter> onFilterSelected;
+  final ValueChanged<_ScheduledSort> onSortSelected;
+
+  const _ScheduledContent({
+    required this.isWide,
+    required this.schedules,
+    required this.activeFilter,
+    required this.activeSort,
+    required this.onFilterSelected,
+    required this.onSortSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SchedulesHeader(
-          selectedSortOption: _sortOption,
-          onSortSelected: (option) => setState(() => _sortOption = option),
+        _ScheduledSummaryRow(schedules: schedules),
+        const SizedBox(height: 18),
+        _ScheduledControls(
+          activeFilter: activeFilter,
+          activeSort: activeSort,
+          onFilterSelected: onFilterSelected,
+          onSortSelected: onSortSelected,
         ),
-        const SizedBox(height: 12),
-        ..._sortedSchedules.map(
-          (schedule) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _ScheduleCard(schedule: schedule),
+        const SizedBox(height: 14),
+        if (schedules.isEmpty)
+          const _ScheduledEmptyState()
+        else
+          ...schedules.map(
+            (schedule) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _ScheduledCard(schedule: schedule),
+            ),
+          ),
+      ],
+    );
+
+    if (isWide) return content;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: homePageMaxWidth),
+        child: content,
+      ),
+    );
+  }
+}
+
+class _ScheduledSummaryRow extends StatelessWidget {
+  final List<ScheduleItem> schedules;
+
+  const _ScheduledSummaryRow({required this.schedules});
+
+  @override
+  Widget build(BuildContext context) {
+    final queued = schedules
+        .where((schedule) => schedule.status.toLowerCase() == 'queued')
+        .length;
+    final drafts = schedules
+        .where((schedule) => schedule.status.toLowerCase() == 'draft')
+        .length;
+    final posted = schedules
+        .where((schedule) => schedule.status.toLowerCase() == 'posted')
+        .length;
+
+    return Row(
+      children: [
+        Expanded(
+          child: _SummaryTile(
+            label: 'Queued',
+            value: '$queued',
+            icon: Icons.schedule_rounded,
+            color: kBlue,
+            backgroundColor: kBlueBg,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SummaryTile(
+            label: 'Drafts',
+            value: '$drafts',
+            icon: Icons.edit_note_rounded,
+            color: kAmber,
+            backgroundColor: kAmberBg,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SummaryTile(
+            label: 'Posted',
+            value: '$posted',
+            icon: Icons.check_circle_rounded,
+            color: kMint,
+            backgroundColor: kMintBg,
           ),
         ),
       ],
@@ -72,25 +265,88 @@ class _SchedulesSectionState extends State<SchedulesSection> {
   }
 }
 
-class _SchedulesHeader extends StatelessWidget {
-  final _ScheduleSortOption selectedSortOption;
-  final ValueChanged<_ScheduleSortOption> onSortSelected;
+class _SummaryTile extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final Color backgroundColor;
 
-  const _SchedulesHeader({
-    required this.selectedSortOption,
+  const _SummaryTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 88),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: kCardBg,
+        borderRadius: BorderRadius.circular(homeRadiusXl),
+        border: Border.all(color: kBorderLight),
+        boxShadow: homeSoftShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              color: kTextBlack,
+              fontFamily: 'Poppins',
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: kTextGrey,
+              fontFamily: 'Poppins',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduledControls extends StatelessWidget {
+  final _ScheduledFilter activeFilter;
+  final _ScheduledSort activeSort;
+  final ValueChanged<_ScheduledFilter> onFilterSelected;
+  final ValueChanged<_ScheduledSort> onSortSelected;
+
+  const _ScheduledControls({
+    required this.activeFilter,
+    required this.activeSort,
+    required this.onFilterSelected,
     required this.onSortSelected,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
             const Expanded(
               child: Text(
-                'Content calendar',
+                'All scheduled posts',
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -99,8 +355,8 @@ class _SchedulesHeader extends StatelessWidget {
                 ),
               ),
             ),
-            PopupMenuButton<_ScheduleSortOption>(
-              tooltip: 'Sort schedules',
+            PopupMenuButton<_ScheduledSort>(
+              tooltip: 'Sort scheduled posts',
               offset: const Offset(0, 48),
               elevation: 8,
               color: kCardBg,
@@ -111,22 +367,19 @@ class _SchedulesHeader extends StatelessWidget {
               onSelected: onSortSelected,
               itemBuilder: (context) => [
                 _sortMenuItem(
-                  option: _ScheduleSortOption.date,
-                  selectedSortOption: selectedSortOption,
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Date',
+                  _ScheduledSort.date,
+                  Icons.calendar_today_rounded,
+                  'Date',
                 ),
                 _sortMenuItem(
-                  option: _ScheduleSortOption.time,
-                  selectedSortOption: selectedSortOption,
-                  icon: Icons.schedule_rounded,
-                  label: 'Time',
+                  _ScheduledSort.time,
+                  Icons.schedule_rounded,
+                  'Time',
                 ),
                 _sortMenuItem(
-                  option: _ScheduleSortOption.title,
-                  selectedSortOption: selectedSortOption,
-                  icon: Icons.sort_by_alpha_rounded,
-                  label: 'A-Z',
+                  _ScheduledSort.title,
+                  Icons.sort_by_alpha_rounded,
+                  'A-Z',
                 ),
               ],
               child: Container(
@@ -150,28 +403,44 @@ class _SchedulesHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        const Wrap(
+        Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
-            _ScheduleFilterChip(label: 'Upcoming', isActive: true),
-            _ScheduleFilterChip(label: 'Drafts'),
-            _ScheduleFilterChip(label: 'Posted'),
+            _FilterChipButton(
+              label: 'All',
+              isActive: activeFilter == _ScheduledFilter.all,
+              onPressed: () => onFilterSelected(_ScheduledFilter.all),
+            ),
+            _FilterChipButton(
+              label: 'Queued',
+              isActive: activeFilter == _ScheduledFilter.queued,
+              onPressed: () => onFilterSelected(_ScheduledFilter.queued),
+            ),
+            _FilterChipButton(
+              label: 'Drafts',
+              isActive: activeFilter == _ScheduledFilter.draft,
+              onPressed: () => onFilterSelected(_ScheduledFilter.draft),
+            ),
+            _FilterChipButton(
+              label: 'Posted',
+              isActive: activeFilter == _ScheduledFilter.posted,
+              onPressed: () => onFilterSelected(_ScheduledFilter.posted),
+            ),
           ],
         ),
       ],
     );
   }
 
-  PopupMenuItem<_ScheduleSortOption> _sortMenuItem({
-    required _ScheduleSortOption option,
-    required _ScheduleSortOption selectedSortOption,
-    required IconData icon,
-    required String label,
-  }) {
-    final isSelected = option == selectedSortOption;
+  PopupMenuItem<_ScheduledSort> _sortMenuItem(
+    _ScheduledSort option,
+    IconData icon,
+    String label,
+  ) {
+    final isSelected = option == activeSort;
 
-    return PopupMenuItem<_ScheduleSortOption>(
+    return PopupMenuItem<_ScheduledSort>(
       value: option,
       height: 44,
       child: Row(
@@ -197,20 +466,25 @@ class _SchedulesHeader extends StatelessWidget {
   }
 }
 
-class _ScheduleFilterChip extends StatelessWidget {
+class _FilterChipButton extends StatelessWidget {
   final String label;
   final bool isActive;
+  final VoidCallback onPressed;
 
-  const _ScheduleFilterChip({required this.label, this.isActive = false});
+  const _FilterChipButton({
+    required this.label,
+    required this.isActive,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
       selected: isActive,
-      label: '$label schedules filter',
+      label: '$label scheduled posts filter',
       child: TextButton(
-        onPressed: () {},
+        onPressed: onPressed,
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 44),
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -235,10 +509,10 @@ class _ScheduleFilterChip extends StatelessWidget {
   }
 }
 
-class _ScheduleCard extends StatelessWidget {
+class _ScheduledCard extends StatelessWidget {
   final ScheduleItem schedule;
 
-  const _ScheduleCard({required this.schedule});
+  const _ScheduledCard({required this.schedule});
 
   void _showScheduleDetails(BuildContext context) {
     showModalBottomSheet<void>(
@@ -260,7 +534,7 @@ class _ScheduleCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: kCardBg,
-        borderRadius: BorderRadius.circular(homeRadiusXl),
+        borderRadius: BorderRadius.circular(homeRadiusLg),
         border: Border.all(color: kBorderLight),
         boxShadow: homeSoftShadow,
       ),
@@ -270,7 +544,7 @@ class _ScheduleCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ScheduleThumbnail(schedule: schedule),
+              _ScheduledThumbnail(schedule: schedule),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -311,19 +585,13 @@ class _ScheduleCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _ScheduleMetaPill(
-                assetPath: '$homeIconPath/ic_outline-date-range.png',
+              _MetaPill(
+                icon: Icons.calendar_today_rounded,
                 label: schedule.date,
               ),
-              _ScheduleMetaPill(
-                assetPath: '$homeIconPath/wi_time-2.png',
-                label: schedule.time,
-              ),
-              _ScheduleTextPill(
-                icon: Icons.public_rounded,
-                label: schedule.platform,
-              ),
-              _ScheduleTextPill(
+              _MetaPill(icon: Icons.access_time_rounded, label: schedule.time),
+              _MetaPill(icon: Icons.public_rounded, label: schedule.platform),
+              _MetaPill(
                 icon: Icons.layers_rounded,
                 label: schedule.contentType,
               ),
@@ -336,6 +604,8 @@ class _ScheduleCard extends StatelessWidget {
                 label: 'View',
                 onPressed: () => _showScheduleDetails(context),
               ),
+              const SizedBox(width: 8),
+              HomeActionButton.link(label: 'Edit', onPressed: () {}),
               const Spacer(),
               IconButton(
                 onPressed: () {},
@@ -351,10 +621,10 @@ class _ScheduleCard extends StatelessWidget {
   }
 }
 
-class _ScheduleThumbnail extends StatelessWidget {
+class _ScheduledThumbnail extends StatelessWidget {
   final ScheduleItem schedule;
 
-  const _ScheduleThumbnail({required this.schedule});
+  const _ScheduledThumbnail({required this.schedule});
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +665,7 @@ class _ScheduleThumbnail extends StatelessWidget {
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
-                child: _SchedulePlatformLogo(platform: schedule.platform),
+                child: _ScheduledPlatformLogo(platform: schedule.platform),
               ),
             ),
           ],
@@ -416,10 +686,10 @@ class _ScheduleThumbnail extends StatelessWidget {
   }
 }
 
-class _SchedulePlatformLogo extends StatelessWidget {
+class _ScheduledPlatformLogo extends StatelessWidget {
   final String platform;
 
-  const _SchedulePlatformLogo({required this.platform});
+  const _ScheduledPlatformLogo({required this.platform});
 
   @override
   Widget build(BuildContext context) {
@@ -550,19 +820,19 @@ class _ScheduleDetailsSheet extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _ScheduleTextPill(
+                      _MetaPill(
                         icon: Icons.calendar_today_rounded,
                         label: schedule.date,
                       ),
-                      _ScheduleTextPill(
+                      _MetaPill(
                         icon: Icons.access_time_rounded,
                         label: schedule.time,
                       ),
-                      _ScheduleTextPill(
+                      _MetaPill(
                         icon: Icons.public_rounded,
                         label: schedule.platform,
                       ),
-                      _ScheduleTextPill(
+                      _MetaPill(
                         icon: Icons.layers_rounded,
                         label: schedule.contentType,
                       ),
@@ -762,8 +1032,17 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDraft = label.toLowerCase() == 'draft';
-    final statusColor = isDraft ? kAmber : kBlue;
-    final statusBg = isDraft ? kAmberBg : kBlueBg;
+    final isPosted = label.toLowerCase() == 'posted';
+    final statusColor = isDraft
+        ? kAmber
+        : isPosted
+        ? kMint
+        : kBlue;
+    final statusBg = isDraft
+        ? kAmberBg
+        : isPosted
+        ? kMintBg
+        : kBlueBg;
 
     return Container(
       height: 26,
@@ -786,11 +1065,11 @@ class _StatusPill extends StatelessWidget {
   }
 }
 
-class _ScheduleMetaPill extends StatelessWidget {
-  final String assetPath;
+class _MetaPill extends StatelessWidget {
+  final IconData icon;
   final String label;
 
-  const _ScheduleMetaPill({required this.assetPath, required this.label});
+  const _MetaPill({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -800,12 +1079,12 @@ class _ScheduleMetaPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: kPillBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x0A2C90E3)),
+        border: Border.all(color: const Color(0x0A000000)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(assetPath, width: 15, height: 15, fit: BoxFit.contain),
+          Icon(icon, size: 15, color: kTextGrey),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -825,37 +1104,40 @@ class _ScheduleMetaPill extends StatelessWidget {
   }
 }
 
-class _ScheduleTextPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _ScheduleTextPill({required this.icon, required this.label});
+class _ScheduledEmptyState extends StatelessWidget {
+  const _ScheduledEmptyState();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 32, maxWidth: 170),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: kPillBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x0A2C90E3)),
+        color: kCardBg,
+        borderRadius: BorderRadius.circular(homeRadiusLg),
+        border: Border.all(color: kBorderLight),
+        boxShadow: homeSoftShadow,
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: const Column(
         children: [
-          Icon(icon, size: 15, color: kTextGrey),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                color: kTextGrey,
-                fontWeight: FontWeight.w500,
-              ),
+          Icon(Icons.event_busy_rounded, color: kTextGrey, size: 32),
+          SizedBox(height: 10),
+          Text(
+            'No scheduled posts',
+            style: TextStyle(
+              color: kTextBlack,
+              fontFamily: 'Poppins',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Try a different filter or create a new post.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: kTextGrey,
+              fontFamily: 'Poppins',
+              fontSize: 12,
             ),
           ),
         ],

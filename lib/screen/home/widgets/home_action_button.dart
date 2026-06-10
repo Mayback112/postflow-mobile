@@ -34,7 +34,7 @@ class HomeActionButton extends StatelessWidget {
           vertical: isPrimary ? 10 : 8,
         ),
         backgroundColor: isPrimary ? kBlue : Colors.transparent,
-        foregroundColor: kBlue,
+        foregroundColor: isPrimary ? Colors.white : kBlue,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(isPrimary ? 10 : 6),
         ),
@@ -44,12 +44,7 @@ class HomeActionButton extends StatelessWidget {
           fontFamily: 'Poppins',
         ),
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: isPrimary ? Colors.white : kBlue),
-      ),
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }

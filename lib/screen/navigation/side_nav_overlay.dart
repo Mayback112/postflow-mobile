@@ -22,7 +22,11 @@ class SideNavOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final panelWidth = MediaQuery.sizeOf(context).width * 0.70;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWide = screenWidth >= 700;
+    final panelWidth = isWide
+        ? 360.0
+        : (screenWidth * 0.76).clamp(300.0, 360.0);
 
     return Stack(
       children: [
@@ -51,9 +55,21 @@ class SideNavOverlay extends StatelessWidget {
           bottom: 0,
           right: isOpen ? 0 : -panelWidth,
           width: panelWidth,
-          child: SideNav(
-            activeIndex: activeIndex,
-            onItemSelected: onItemSelected,
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 28,
+                  offset: Offset(-10, 0),
+                ),
+              ],
+            ),
+            child: SideNav(
+              activeIndex: activeIndex,
+              onClose: onClose,
+              onItemSelected: onItemSelected,
+            ),
           ),
         ),
       ],

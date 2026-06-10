@@ -44,54 +44,93 @@ class _CalendarScreenState extends State<CalendarScreen> {
         onClose: _closeSideNav,
         onItemSelected: (_) => _closeSideNav(),
         child: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: homePageMaxWidth),
-              child: Column(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isLandscape =
+                  MediaQuery.orientationOf(context) == Orientation.landscape;
+              final isWide = constraints.maxWidth >= 700 || isLandscape;
+
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   CalendarTopBar(onMenuTap: _openSideNav),
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _CalendarEntry(
-                            index: 0,
-                            child: MonthHeader(
-                              month: _focusedMonth,
-                              onPrev: _prevMonth,
-                              onNext: _nextMonth,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          _CalendarEntry(
-                            index: 1,
-                            child: CalendarGrid(
-                              focusedMonth: _focusedMonth,
-                              selectedDay: _selectedDay,
-                              scheduledDays: calendarScheduledDays,
-                              onDayTap: (day) =>
-                                  setState(() => _selectedDay = day),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          const _CalendarEntry(
-                            index: 2,
-                            child: CalendarSchedulesSection(
-                              schedules: schedules,
-                            ),
-                          ),
-                        ],
+                      child: _CalendarContent(
+                        isWide: isWide,
+                        focusedMonth: _focusedMonth,
+                        selectedDay: _selectedDay,
+                        onPrevMonth: _prevMonth,
+                        onNextMonth: _nextMonth,
+                        onDayTap: (day) => setState(() => _selectedDay = day),
                       ),
                     ),
                   ),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CalendarContent extends StatelessWidget {
+  final bool isWide;
+  final DateTime focusedMonth;
+  final int selectedDay;
+  final VoidCallback onPrevMonth;
+  final VoidCallback onNextMonth;
+  final ValueChanged<int> onDayTap;
+
+  const _CalendarContent({
+    required this.isWide,
+    required this.focusedMonth,
+    required this.selectedDay,
+    required this.onPrevMonth,
+    required this.onNextMonth,
+    required this.onDayTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _CalendarEntry(
+          index: 0,
+          child: MonthHeader(
+            month: focusedMonth,
+            onPrev: onPrevMonth,
+            onNext: onNextMonth,
+          ),
+        ),
+        const SizedBox(height: 18),
+        _CalendarEntry(
+          index: 1,
+          child: CalendarGrid(
+            focusedMonth: focusedMonth,
+            selectedDay: selectedDay,
+            scheduledDays: calendarScheduledDays,
+            onDayTap: onDayTap,
+          ),
+        ),
+        const SizedBox(height: 24),
+        const _CalendarEntry(
+          index: 2,
+          child: CalendarSchedulesSection(schedules: schedules),
+        ),
+      ],
+    );
+
+    if (isWide) return content;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: homePageMaxWidth),
+        child: content,
       ),
     );
   }

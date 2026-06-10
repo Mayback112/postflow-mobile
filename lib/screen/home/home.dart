@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: kHomeBg,
       body: SideNavOverlay(
         isOpen: _isSideNavOpen,
         activeIndex: 0,
@@ -48,7 +48,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                       child: _HomeContent(isWide: isWide),
                     ),
                   ),
@@ -76,12 +76,14 @@ class _HomeContent extends StatelessWidget {
         SizedBox(height: 16),
         _HomeEntry(index: 1, child: CreateWithAiCard()),
         SizedBox(height: 16),
+        _HomeEntry(index: 2, child: _HomeStatsStrip()),
+        SizedBox(height: 16),
         _HomeEntry(
-          index: 2,
+          index: 3,
           child: ConnectedPlatformsCard(platforms: connectedPlatforms),
         ),
         SizedBox(height: 20),
-        _HomeEntry(index: 3, child: SchedulesSection(schedules: schedules)),
+        _HomeEntry(index: 4, child: SchedulesSection(schedules: schedules)),
         SizedBox(height: 24),
       ],
     );
@@ -92,6 +94,107 @@ class _HomeContent extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: homePageMaxWidth),
         child: content,
+      ),
+    );
+  }
+}
+
+class _HomeStatsStrip extends StatelessWidget {
+  const _HomeStatsStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(
+          child: _HomeStatTile(
+            value: '12',
+            label: 'Scheduled',
+            color: kBlue,
+            backgroundColor: kBlueBg,
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: _HomeStatTile(
+            value: '4',
+            label: 'Channels',
+            color: kBlue,
+            backgroundColor: kBlueBg,
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: _HomeStatTile(
+            value: '86%',
+            label: 'Ready',
+            color: kMint,
+            backgroundColor: kMintBg,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeStatTile extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+  final Color backgroundColor;
+
+  const _HomeStatTile({
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: kCardBg,
+        borderRadius: BorderRadius.circular(homeRadiusLg),
+        border: Border.all(color: kBorderLight),
+        boxShadow: homeSoftShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Poppins',
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: kTextGrey,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Poppins',
+            ),
+          ),
+        ],
       ),
     );
   }

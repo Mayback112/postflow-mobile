@@ -12,6 +12,7 @@ const kTextBlack = Color(0xe5000000);
 const kTextMuted = Color(0xcc000000);
 const kTextGrey = Color(0xff6f6f6f);
 const kCardBg = Color(0xffffffff);
+const kHomeBg = Color(0xffffffff);
 const kPillBg = Color(0xfff8fbff);
 const kBorderLight = Color(0x12000000);
 
@@ -22,11 +23,12 @@ const homeSpaceLg = 16.0;
 
 const homeRadiusMd = 12.0;
 const homeRadiusLg = 16.0;
+const homeRadiusXl = 24.0;
 
 const homeCardShadow = [
-  BoxShadow(color: Color(0x0A000000), blurRadius: 18, offset: Offset(0, 8)),
+  BoxShadow(color: Color(0x0A000000), blurRadius: 24, offset: Offset(0, 12)),
 ];
 
 const homeSoftShadow = [
-  BoxShadow(color: Color(0x08000000), blurRadius: 14, offset: Offset(0, 6)),
+  BoxShadow(color: Color(0x08000000), blurRadius: 18, offset: Offset(0, 8)),
 ];

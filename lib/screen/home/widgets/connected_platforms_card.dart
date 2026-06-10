@@ -44,7 +44,7 @@ class ConnectedPlatformsCard extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => Navigator.of(context).pushNamed('/Platforms'),
                 style: TextButton.styleFrom(
                   minimumSize: const Size(48, 44),
                   padding: const EdgeInsets.symmetric(horizontal: 10),
