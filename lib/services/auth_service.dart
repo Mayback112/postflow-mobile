@@ -6,31 +6,39 @@ class AuthService {
 
   final ApiClient _apiClient;
 
-  Future<AuthSession> sign(SignRequest request) async {
+  Future<AuthSession> signInWithGoogle(GoogleAuthRequest request) async {
     final response = await _apiClient.postJson(
-      ApiEndpoint.authSign,
+      ApiEndpoint.authGoogle,
       request.toJson(),
+      skipAuth: true,
     );
     return AuthSession.fromJson(response);
   }
 
-  Future<AuthSession> testSignIn() async {
-    final response = await _apiClient.postJson(ApiEndpoint.authTest, null);
+  Future<AuthSession> sign(SignRequest request) async {
+    final response = await _apiClient.postJson(
+      ApiEndpoint.authSign,
+      request.toJson(),
+      skipAuth: true,
+    );
     return AuthSession.fromJson(response);
   }
 
   Future<AuthSession> refresh(String refreshToken) async {
     final response = await _apiClient.postJson(ApiEndpoint.authRefresh, {
       'refreshToken': refreshToken,
-    });
+    }, skipAuth: true);
     return AuthSession.fromJson(response);
   }
 
-  Future<AuthUser> me(String accessToken) async {
-    final response = await _apiClient.getJson(
-      ApiEndpoint.authMe,
-      accessToken: accessToken,
-    );
+  Future<void> logout(String refreshToken) async {
+    await _apiClient.postJson(ApiEndpoint.authLogout, {
+      'refreshToken': refreshToken,
+    }, skipAuth: true);
+  }
+
+  Future<AuthUser> me() async {
+    final response = await _apiClient.getJson(ApiEndpoint.authMe);
     return AuthUser.fromJson(response['user'] as Map<String, dynamic>);
   }
 }

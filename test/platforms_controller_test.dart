@@ -101,6 +101,55 @@ void main() {
     expect(controller.errorMessage, contains('cancelled or denied'));
   });
 
+  test('syncs accounts after social-connect success callback', () async {
+    final socialService = _FakeSocialAccountService(
+      listedAccounts: const [instagram],
+      syncedAccounts: const [instagram, tiktok],
+    );
+    final controller = PlatformsController(
+      workspaceService: _FakeWorkspaceService(workspace: workspace),
+      socialAccountService: socialService,
+    );
+
+    await controller.loadAccounts();
+    await controller.connectPlatform('TikTok');
+    await controller.handleConnectCallback(
+      Uri.parse(
+        'postflow://social-connect?status=connected&state=connect-state-1&syncedAccounts=1&connected=tiktok&accountId=account-2',
+      ),
+    );
+
+    expect(socialService.checkedState, 'connect-state-1');
+    expect(socialService.syncCount, 1);
+    expect(controller.connectStarted, isFalse);
+    expect(controller.successMessage, 'Social account connected successfully.');
+    expect(controller.accountForPlatform('TIKTOK'), tiktok);
+  });
+
+  test('shows social-connect error callback message', () async {
+    final socialService = _FakeSocialAccountService(
+      listedAccounts: const [instagram],
+    );
+    final controller = PlatformsController(
+      workspaceService: _FakeWorkspaceService(workspace: workspace),
+      socialAccountService: socialService,
+    );
+
+    await controller.loadAccounts();
+    await controller.connectPlatform('Instagram');
+    await controller.handleConnectCallback(
+      Uri.parse(
+        'postflow://social-connect?status=error&state=connect-state-1&syncedAccounts=0&error=oauth_denied&connected=instagram',
+      ),
+    );
+
+    expect(socialService.syncCount, 0);
+    expect(controller.connectStarted, isFalse);
+    expect(controller.successMessage, isNull);
+    expect(controller.errorMessage, contains('instagram connection'));
+    expect(controller.errorMessage, contains('cancelled or denied'));
+  });
+
   test('polls connect status before syncing accounts', () async {
     final socialService = _FakeSocialAccountService(
       listedAccounts: const [instagram],

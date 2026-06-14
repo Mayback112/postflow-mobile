@@ -32,6 +32,14 @@
 				<string>postflow</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>postflow.google-auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.postflow.app</string>
+			</array>
+		</dict>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

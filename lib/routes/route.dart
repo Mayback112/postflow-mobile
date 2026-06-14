@@ -18,6 +18,13 @@ class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final routeName = settings.name ?? '/';
 
+    if (isSocialConnectRoute(routeName)) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const PlatformsScreen(),
+      );
+    }
+
     switch (routeName) {
       case '/':
         return MaterialPageRoute(
@@ -97,5 +104,25 @@ class Routes {
           ),
         );
     }
+  }
+
+  static bool isSocialConnectRoute(String routeName) {
+    final uri = Uri.tryParse(routeName);
+    if (uri == null) return false;
+
+    if (uri.host == 'social-connect' ||
+        routeName.startsWith('/social-connect')) {
+      return true;
+    }
+
+    if (uri.path == '/' || uri.path.isEmpty) {
+      final query = uri.queryParameters;
+      return query.containsKey('status') &&
+          (query.containsKey('connected') ||
+              query.containsKey('syncedAccounts') ||
+              query.containsKey('error'));
+    }
+
+    return uri.path.startsWith('/zernio/callback');
   }
 }

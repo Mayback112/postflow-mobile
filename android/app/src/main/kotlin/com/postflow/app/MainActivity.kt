@@ -1,4 +1,4 @@
-package com.example.postflow
+package com.postflow.app
 
 import io.flutter.embedding.android.FlutterActivity
 

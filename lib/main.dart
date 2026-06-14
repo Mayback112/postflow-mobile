@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PayPro',
+      title: 'PostFlow',
       debugShowCheckedModeBanner: false, // Disable debug banner
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6B4EFF)),

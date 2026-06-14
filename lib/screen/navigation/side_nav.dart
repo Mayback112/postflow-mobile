@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:postflow/controllers/auth_controller.dart';
 import 'package:postflow/models/auth_models.dart';
-import 'package:postflow/services/auth_token_storage.dart';
+import 'package:postflow/services/auth_service.dart';
 import 'package:postflow/theme/home_theme.dart';
 
 const kDivider = Color(0xffe1e4e5);
@@ -112,9 +113,14 @@ class _SideNavState extends State<SideNav> {
   }
 
   Future<void> _loadUser() async {
-    final user = await AuthTokenStorage().readUser();
-    if (!mounted) return;
-    setState(() => _user = user);
+    try {
+      final user = await AuthService().me();
+      if (!mounted) return;
+      setState(() => _user = user);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _user = null);
+    }
   }
 
   @override
@@ -438,10 +444,35 @@ class _NavTile extends StatelessWidget {
   }
 }
 
-class _SideNavFooter extends StatelessWidget {
+class _SideNavFooter extends StatefulWidget {
   final VoidCallback? onClose;
 
   const _SideNavFooter({this.onClose});
+
+  @override
+  State<_SideNavFooter> createState() => _SideNavFooterState();
+}
+
+class _SideNavFooterState extends State<_SideNavFooter> {
+  final AuthController _authController = AuthController();
+  bool _isLoggingOut = false;
+
+  @override
+  void dispose() {
+    _authController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _logout() async {
+    if (_isLoggingOut) return;
+
+    setState(() => _isLoggingOut = true);
+    await _authController.signOut();
+
+    if (!mounted) return;
+    widget.onClose?.call();
+    Navigator.of(context).pushNamedAndRemoveUntil('/Signup', (_) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -487,7 +518,7 @@ class _SideNavFooter extends StatelessWidget {
               const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: () {
-                  onClose?.call();
+                  widget.onClose?.call();
                   final currentRoute = ModalRoute.of(context)?.settings.name;
                   if (currentRoute != '/CreateManual') {
                     Navigator.of(context).pushNamed('/CreateManual');
@@ -499,6 +530,30 @@ class _SideNavFooter extends StatelessWidget {
                   minimumSize: const Size(48, 48),
                   backgroundColor: kBlue,
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(homeRadiusMd),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: _isLoggingOut ? null : _logout,
+                icon: _isLoggingOut
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.logout_rounded, size: 18),
+                label: Text(_isLoggingOut ? 'Logging out...' : 'Logout'),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 44),
+                  foregroundColor: const Color(0xffd92d20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(homeRadiusMd),
                   ),

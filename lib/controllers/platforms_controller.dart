@@ -90,33 +90,48 @@ class PlatformsController extends ChangeNotifier {
   }
 
   Future<void> handleConnectCallback(Uri uri) async {
-    if (uri.scheme != 'postflow' ||
-        uri.host != 'social-accounts' ||
-        !uri.path.startsWith('/zernio/callback')) {
+    if (!_isSocialConnectCallback(uri)) {
       return;
     }
 
-    final callbackPlatform = uri.queryParameters['platform'];
+    final callbackPlatform =
+        uri.queryParameters['connected'] ?? uri.queryParameters['platform'];
     final callbackPlatformEnum = callbackPlatform?.toUpperCase();
+    final status = uri.queryParameters['status']?.toLowerCase();
     final error = uri.queryParameters['error'];
+    final state = uri.queryParameters['state'];
 
     if (callbackPlatformEnum != null && callbackPlatformEnum.isNotEmpty) {
       _pendingConnectPlatform = callbackPlatformEnum;
     }
 
-    if (error != null && error.isNotEmpty) {
+    if (state != null && state.isNotEmpty) {
+      _pendingConnectState = state;
+    }
+
+    if (status == 'error' || (error != null && error.isNotEmpty)) {
+      final callbackError = error == null || error.isEmpty
+          ? 'connection_failed'
+          : error;
       _connectingPlatform = null;
       _pendingConnectPlatform = null;
       _pendingConnectState = null;
       _isSyncing = false;
       _successMessage = null;
-      _errorMessage = _messageForCallbackError(error, callbackPlatform);
+      _errorMessage = _messageForCallbackError(callbackError, callbackPlatform);
       notifyListeners();
       await _refreshAccountsWithoutLoading();
       return;
     }
 
     await syncAccountsAfterConnect();
+  }
+
+  bool _isSocialConnectCallback(Uri uri) {
+    if (uri.scheme != 'postflow') return false;
+    if (uri.host == 'social-connect') return true;
+    return uri.host == 'social-accounts' &&
+        uri.path.startsWith('/zernio/callback');
   }
 
   Future<void> syncAccountsAfterConnect() async {

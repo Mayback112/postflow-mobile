@@ -111,55 +111,68 @@ class OnboardingPage extends StatelessWidget {
                   32,
                   isCompactHeight ? 16 : 24,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: isCompactHeight ? 8 : 24),
-                    if (welcomeText != null) ...[
-                      Text(
-                        welcomeText!,
-                        style: TextStyle(
-                          fontSize: isCompactHeight ? 15 : 16,
-                          color: Colors.black.withValues(alpha: 0.6),
-                          fontFamily: 'Poppins',
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: isCompactHeight ? 8 : 24),
+                              if (welcomeText != null) ...[
+                                Text(
+                                  welcomeText!,
+                                  style: TextStyle(
+                                    fontSize: isCompactHeight ? 15 : 16,
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                                SizedBox(height: isCompactHeight ? 4 : 6),
+                              ],
+                              Text(
+                                title,
+                                style: TextStyle(
+                                  fontSize: isCompactHeight ? 23 : 26,
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  fontFamily: 'Poppins',
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.25,
+                                ),
+                              ),
+                              SizedBox(height: isCompactHeight ? 8 : 12),
+                              Text(
+                                description,
+                                style: TextStyle(
+                                  fontSize: isCompactHeight ? 14 : 15,
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  fontFamily: 'Poppins',
+                                  height: 1.5,
+                                ),
+                              ),
+                              SizedBox(height: isCompactHeight ? 12 : 16),
+                              _OnboardingStepIndicator(
+                                activeStep: activeStep,
+                                totalSteps: totalSteps,
+                              ),
+                              const Spacer(),
+                              _OnboardingActions(
+                                primaryButtonText: primaryButtonText,
+                                secondaryButtonText: secondaryButtonText,
+                                onPrimaryPressed: onPrimaryPressed,
+                                onSecondaryPressed: onSecondaryPressed,
+                              ),
+                              SizedBox(height: isCompactHeight ? 4 : 8),
+                            ],
+                          ),
                         ),
                       ),
-                      SizedBox(height: isCompactHeight ? 4 : 6),
-                    ],
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: isCompactHeight ? 23 : 26,
-                        color: Colors.black.withValues(alpha: 0.7),
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                      ),
-                    ),
-                    SizedBox(height: isCompactHeight ? 8 : 12),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: isCompactHeight ? 14 : 15,
-                        color: Colors.black.withValues(alpha: 0.7),
-                        fontFamily: 'Poppins',
-                        height: 1.5,
-                      ),
-                    ),
-                    SizedBox(height: isCompactHeight ? 12 : 16),
-                    _OnboardingStepIndicator(
-                      activeStep: activeStep,
-                      totalSteps: totalSteps,
-                    ),
-                    const Spacer(),
-                    _OnboardingActions(
-                      primaryButtonText: primaryButtonText,
-                      secondaryButtonText: secondaryButtonText,
-                      onPrimaryPressed: onPrimaryPressed,
-                      onSecondaryPressed: onSecondaryPressed,
-                    ),
-                    SizedBox(height: isCompactHeight ? 4 : 8),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

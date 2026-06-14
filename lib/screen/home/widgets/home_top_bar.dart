@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:postflow/models/auth_models.dart';
-import 'package:postflow/services/auth_token_storage.dart';
+import 'package:postflow/services/auth_service.dart';
 import 'package:postflow/theme/home_theme.dart';
 
 class HomeTopBar extends StatefulWidget {
@@ -22,9 +22,14 @@ class _HomeTopBarState extends State<HomeTopBar> {
   }
 
   Future<void> _loadUser() async {
-    final user = await AuthTokenStorage().readUser();
-    if (!mounted) return;
-    setState(() => _user = user);
+    try {
+      final user = await AuthService().me();
+      if (!mounted) return;
+      setState(() => _user = user);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _user = null);
+    }
   }
 
   @override

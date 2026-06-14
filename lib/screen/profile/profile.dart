@@ -4,7 +4,6 @@ import 'package:postflow/screen/navigation/side_nav_overlay.dart';
 import 'package:postflow/screen/profile/widgets/profile_content.dart';
 import 'package:postflow/screen/profile/widgets/profile_top_bar.dart';
 import 'package:postflow/services/auth_service.dart';
-import 'package:postflow/services/auth_token_storage.dart';
 import 'package:postflow/theme/home_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -15,7 +14,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final AuthTokenStorage _tokenStorage = AuthTokenStorage();
   final AuthService _authService = AuthService();
 
   bool _isSideNavOpen = false;
@@ -33,24 +31,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final storedUser = await _tokenStorage.readUser();
-    if (!mounted) return;
-
-    setState(() {
-      _user = storedUser;
-      _isProfileLoading = storedUser == null;
-    });
-
-    final accessToken = await _tokenStorage.readAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
-      if (!mounted) return;
-      setState(() => _isProfileLoading = false);
-      return;
-    }
-
     try {
-      final user = await _authService.me(accessToken);
-      await _tokenStorage.saveUser(user);
+      final user = await _authService.me();
       if (!mounted) return;
       setState(() {
         _user = user;

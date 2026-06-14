@@ -1,18 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class SignInContent extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onGoogleTap;
   final VoidCallback onAppleTap;
-  final VoidCallback onTestTap;
 
   const SignInContent({
     super.key,
     required this.isLoading,
     required this.onGoogleTap,
     required this.onAppleTap,
-    required this.onTestTap,
   });
 
   @override
@@ -57,14 +54,6 @@ class SignInContent extends StatelessWidget {
                 isLoading: isLoading,
                 onTap: onAppleTap,
               ),
-              if (kDebugMode) ...[
-                const SizedBox(height: 14),
-                _SecondaryButton(
-                  label: 'Use local test account',
-                  isLoading: isLoading,
-                  onTap: onTestTap,
-                ),
-              ],
               const SizedBox(height: 30),
               const Text(
                 'By continuing, you agree to our Terms of Service and Privacy Policy.',
@@ -164,40 +153,6 @@ class _SocialButton extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SecondaryButton extends StatelessWidget {
-  const _SecondaryButton({
-    required this.label,
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: OutlinedButton(
-        onPressed: isLoading ? null : onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xff2c90e3),
-          side: const BorderSide(color: Color(0x332C90E3)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
       ),
     );

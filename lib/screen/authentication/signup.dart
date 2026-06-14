@@ -60,7 +60,6 @@ class _SignInPageState extends State<SignInPage> {
             isLoading: isLoading,
             onGoogleTap: () => _signIn(_authController.signInWithGoogle),
             onAppleTap: () => _signIn(_authController.signInWithApple),
-            onTestTap: () => _signIn(_authController.testSignIn),
           ),
         );
       },

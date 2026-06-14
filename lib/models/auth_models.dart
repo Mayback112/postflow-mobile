@@ -94,3 +94,28 @@ class SignRequest {
     };
   }
 }
+
+class GoogleAuthRequest {
+  const GoogleAuthRequest({
+    required this.idToken,
+    this.accessToken,
+    this.name,
+    this.profileImageUrl,
+  });
+
+  final String idToken;
+  final String? accessToken;
+  final String? name;
+  final String? profileImageUrl;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'idToken': idToken,
+      if (accessToken != null && accessToken!.isNotEmpty)
+        'accessToken': accessToken,
+      if (name != null && name!.isNotEmpty) 'name': name,
+      if (profileImageUrl != null && profileImageUrl!.isNotEmpty)
+        'profileImageUrl': profileImageUrl,
+    };
+  }
+}

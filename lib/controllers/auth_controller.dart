@@ -32,39 +32,33 @@ class AuthController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   Future<bool> signInWithGoogle() async {
-    return _signWithProvider(_nativeAuthTokenProvider.getGoogleIdentity);
-  }
-
-  Future<bool> signInWithApple() async {
-    return _signWithProvider(_nativeAuthTokenProvider.getAppleIdentity);
-  }
-
-  Future<bool> testSignIn() async {
     _setLoading();
 
     try {
-      if (kDebugMode) {
-        debugPrint('AUTH test sign-in started');
-      }
-      final session = await _authService.testSignIn();
-      if (kDebugMode) {
-        debugPrint('AUTH test sign-in response parsed');
-      }
+      final identity = await _nativeAuthTokenProvider.getGoogleIdentity();
+      final session = await _authService.signInWithGoogle(
+        identity.toGoogleAuthRequest(),
+      );
       await _applySession(session);
-      if (kDebugMode) {
-        debugPrint('AUTH test sign-in session applied');
-      }
       return true;
     } catch (error) {
       if (kDebugMode) {
-        debugPrint('AUTH test sign-in failed: $error');
+        debugPrint('AUTH operation failed: $error');
       }
       _setError(_messageFor(error));
       return false;
     }
   }
 
+  Future<bool> signInWithApple() async {
+    return _signWithProvider(_nativeAuthTokenProvider.getAppleIdentity);
+  }
+
   Future<bool> signWithIdentity(ProviderIdentity identity) {
+    if (identity.provider == AuthProvider.google) {
+      return _signInWithGoogleIdentity(identity);
+    }
+
     return _sign(
       SignRequest(
         provider: identity.provider,
@@ -85,9 +79,18 @@ class AuthController extends ChangeNotifier {
       }
 
       final session = await _authService.refresh(refreshToken);
-      await _applySession(session);
+      await _tokenStorage.saveSession(session);
+      await _workspaceService.ensureSelectedWorkspace();
+
+      _user = session.user;
+      _isLoading = false;
+      _errorMessage = null;
+      notifyListeners();
       return true;
     } catch (error) {
+      if (kDebugMode) {
+        debugPrint('AUTH operation failed: $error');
+      }
       _setError(_messageFor(error));
       return false;
     }
@@ -98,14 +101,25 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<AuthUser?> storedUser() {
-    return _tokenStorage.readUser();
+    return Future.value(_user);
   }
 
   Future<void> signOut() async {
-    await _tokenStorage.clear();
-    _user = null;
-    _errorMessage = null;
-    notifyListeners();
+    final refreshToken = await _tokenStorage.readRefreshToken();
+    try {
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await _authService.logout(refreshToken);
+      }
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('AUTH logout failed: $error');
+      }
+    } finally {
+      await _tokenStorage.clear();
+      _user = null;
+      _errorMessage = null;
+      notifyListeners();
+    }
   }
 
   Future<bool> _signWithProvider(
@@ -124,6 +138,9 @@ class AuthController extends ChangeNotifier {
         ),
       );
     } catch (error) {
+      if (kDebugMode) {
+        debugPrint('AUTH operation failed: $error');
+      }
       _setError(_messageFor(error));
       return false;
     }
@@ -137,6 +154,27 @@ class AuthController extends ChangeNotifier {
       await _applySession(session);
       return true;
     } catch (error) {
+      if (kDebugMode) {
+        debugPrint('AUTH operation failed: $error');
+      }
+      _setError(_messageFor(error));
+      return false;
+    }
+  }
+
+  Future<bool> _signInWithGoogleIdentity(ProviderIdentity identity) async {
+    _setLoading();
+
+    try {
+      final session = await _authService.signInWithGoogle(
+        identity.toGoogleAuthRequest(),
+      );
+      await _applySession(session);
+      return true;
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('AUTH operation failed: $error');
+      }
       _setError(_messageFor(error));
       return false;
     }

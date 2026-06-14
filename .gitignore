@@ -20,3 +20,9 @@ windows/flutter/ephemeral/
 # IDE/user files
 .idea/
 *.iml
+
+.env
+.env.*
+!.env.example
+env/*.local.json
+client_secret_*.json

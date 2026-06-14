@@ -2,16 +2,13 @@ import 'package:postflow/api/api.dart';
 import 'package:postflow/api/api_exception.dart';
 import 'package:postflow/models/social_connect_models.dart';
 import 'package:postflow/models/social_account.dart';
-import 'package:postflow/services/auth_token_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SocialAccountService {
-  SocialAccountService({ApiClient? apiClient, AuthTokenStorage? tokenStorage})
-    : _apiClient = apiClient ?? ApiClient(),
-      _tokenStorage = tokenStorage ?? AuthTokenStorage();
+  SocialAccountService({ApiClient? apiClient})
+    : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
-  final AuthTokenStorage _tokenStorage;
 
   Future<SocialConnectStart> connectPlatform({
     required String workspaceId,
@@ -20,7 +17,6 @@ class SocialAccountService {
     final response = await _apiClient.postJson(
       ApiEndpoint.socialZernioConnect,
       {'workspaceId': workspaceId, 'platform': platform},
-      accessToken: await _requiredAccessToken(),
     );
 
     final authUrl = response['authUrl'] as String?;
@@ -50,7 +46,6 @@ class SocialAccountService {
     final response = await _apiClient.getJson(
       ApiEndpoint.socialZernioConnectStatus,
       query: {'state': state},
-      accessToken: await _requiredAccessToken(),
     );
     return SocialConnectStatusResult.fromJson(response);
   }
@@ -60,7 +55,7 @@ class SocialAccountService {
   }) async {
     final response = await _apiClient.postJson(ApiEndpoint.socialZernioSync, {
       'workspaceId': workspaceId,
-    }, accessToken: await _requiredAccessToken());
+    });
     return _accountsFromResponse(response);
   }
 
@@ -70,7 +65,6 @@ class SocialAccountService {
     final response = await _apiClient.getJson(
       ApiEndpoint.socialAccounts,
       query: {'workspaceId': workspaceId},
-      accessToken: await _requiredAccessToken(),
     );
     return _accountsFromResponse(response);
   }
@@ -81,13 +75,5 @@ class SocialAccountService {
         .cast<Map<String, dynamic>>()
         .map(SocialAccount.fromJson)
         .toList();
-  }
-
-  Future<String> _requiredAccessToken() async {
-    final accessToken = await _tokenStorage.readAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
-      throw const ApiException('Please sign in again');
-    }
-    return accessToken;
   }
 }
