@@ -1,0 +1,5 @@
+{
+  "API_BASE_URL": "https://nonrepudiable-richie-nonceremonious.ngrok-free.dev",
+  "GOOGLE_OAUTH_CLIENT_IDS": "805427396737-9va66tb42nqbmue2mofdnv1df97eubp4.apps.googleusercontent.com",
+  "GOOGLE_REDIRECT_URL": "com.postflow.app:/oauth2redirect/google"
+}
