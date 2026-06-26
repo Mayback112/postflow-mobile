@@ -42,7 +42,7 @@ class NotificationItem {
       id: json['id'] as String,
       kind: _kindFromType(json['type'] as String? ?? ''),
       title: json['title'] as String? ?? '',
-      message: json['message'] as String? ?? '',
+      message: json['message'] as String? ?? json['body'] as String? ?? '',
       time: _formatTime(createdAt ?? DateTime.now()),
       isUnread: readAt == null,
       readAt: readAt,

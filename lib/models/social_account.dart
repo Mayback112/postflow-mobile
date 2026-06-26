@@ -9,7 +9,7 @@ class SocialAccount {
     this.username,
     this.profilePictureUrl,
     this.profileUrl,
-    this.zernioAccountId,
+    this.platformAccountId,
   });
 
   final String id;
@@ -21,7 +21,7 @@ class SocialAccount {
   final String? username;
   final String? profilePictureUrl;
   final String? profileUrl;
-  final String? zernioAccountId;
+  final String? platformAccountId;
 
   factory SocialAccount.fromJson(Map<String, dynamic> json) {
     return SocialAccount(
@@ -34,7 +34,7 @@ class SocialAccount {
       username: json['username'] as String?,
       profilePictureUrl: json['profilePictureUrl'] as String?,
       profileUrl: json['profileUrl'] as String?,
-      zernioAccountId: json['zernioAccountId'] as String?,
+      platformAccountId: json['platformAccountId'] as String?,
     );
   }
 }

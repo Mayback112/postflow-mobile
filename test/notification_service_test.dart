@@ -79,6 +79,36 @@ void main() {
     expect(capturedRequest.method, 'PATCH');
     expect(capturedRequest.uri.path, '/mobile/notifications/read-all');
   });
+
+  test('markRead unwraps the notification payload returned by the backend', () async {
+    late RequestOptions capturedRequest;
+    final service = NotificationService(
+      apiClient: _mockApiClient((options) {
+        capturedRequest = options;
+        return {
+          'notification': {
+            'id': 'notification-1',
+            'type': 'PUBLISH_SUCCESS',
+            'title': 'Post published',
+            'message': 'Your post was published successfully.',
+            'readAt': '2026-06-15T20:05:00.000Z',
+            'createdAt': '2026-06-15T20:00:00.000Z',
+          },
+        };
+      }),
+    );
+
+    final notification = await service.markRead('notification-1');
+
+    expect(capturedRequest.method, 'PATCH');
+    expect(
+      capturedRequest.uri.path,
+      '/mobile/notifications/notification-1/read',
+    );
+    expect(notification.id, 'notification-1');
+    expect(notification.isUnread, isFalse);
+    expect(notification.title, 'Post published');
+  });
 }
 
 ApiClient _mockApiClient(

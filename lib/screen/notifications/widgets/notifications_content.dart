@@ -6,8 +6,13 @@ import 'package:postflow/screen/notifications/widgets/notifications_empty_state.
 
 class NotificationsContent extends StatelessWidget {
   final List<NotificationItem> notifications;
+  final ValueChanged<NotificationItem>? onNotificationTap;
 
-  const NotificationsContent({super.key, required this.notifications});
+  const NotificationsContent({
+    super.key,
+    required this.notifications,
+    this.onNotificationTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,12 @@ class NotificationsContent extends StatelessWidget {
           ...notifications.map(
             (notification) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: NotificationTile(notification: notification),
+              child: NotificationTile(
+                notification: notification,
+                onTap: onNotificationTap == null
+                    ? null
+                    : () => onNotificationTap?.call(notification),
+              ),
             ),
           ),
       ],

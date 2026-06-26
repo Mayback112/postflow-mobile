@@ -23,14 +23,21 @@ class QueueService {
     required String timezone,
     bool? isActive,
   }) async {
-    final response = await _apiClient.postJson(ApiEndpoint.queueSlots, {
+    final body = <String, dynamic>{
       'workspaceId': workspaceId,
-      'socialAccountId': socialAccountId,
       'dayOfWeek': dayOfWeek,
       'time': time,
       'timezone': timezone,
-      if (isActive != null) 'isActive': isActive,
-    });
+    };
+
+    if (socialAccountId != null) {
+      body['socialAccountId'] = socialAccountId;
+    }
+    if (isActive != null) {
+      body['isActive'] = isActive;
+    }
+
+    final response = await _apiClient.postJson(ApiEndpoint.queueSlots, body);
     return QueueSlot.fromJson(response['queueSlot'] as Map<String, dynamic>);
   }
 
@@ -42,14 +49,28 @@ class QueueService {
     String? timezone,
     bool? isActive,
   }) async {
-    final response = await _apiClient
-        .patchJsonRaw('/mobile/queue/slots/$slotId', {
-          if (socialAccountId != null) 'socialAccountId': socialAccountId,
-          if (dayOfWeek != null) 'dayOfWeek': dayOfWeek,
-          if (time != null) 'time': time,
-          if (timezone != null) 'timezone': timezone,
-          if (isActive != null) 'isActive': isActive,
-        });
+    final body = <String, dynamic>{};
+
+    if (socialAccountId != null) {
+      body['socialAccountId'] = socialAccountId;
+    }
+    if (dayOfWeek != null) {
+      body['dayOfWeek'] = dayOfWeek;
+    }
+    if (time != null) {
+      body['time'] = time;
+    }
+    if (timezone != null) {
+      body['timezone'] = timezone;
+    }
+    if (isActive != null) {
+      body['isActive'] = isActive;
+    }
+
+    final response = await _apiClient.patchJsonRaw(
+      '/mobile/queue/slots/$slotId',
+      body,
+    );
     return QueueSlot.fromJson(response['queueSlot'] as Map<String, dynamic>);
   }
 
@@ -62,13 +83,17 @@ class QueueService {
     int count = 10,
     DateTime? from,
   }) async {
+    final query = <String, dynamic>{
+      'workspaceId': workspaceId,
+      'count': count,
+    };
+    if (from != null) {
+      query['from'] = from.toUtc().toIso8601String();
+    }
+
     final response = await _apiClient.getJson(
       ApiEndpoint.queuePreview,
-      query: {
-        'workspaceId': workspaceId,
-        'count': count,
-        if (from != null) 'from': from.toUtc().toIso8601String(),
-      },
+      query: query,
     );
     final items = response['queuePreview'] as List<dynamic>? ?? const [];
     return items

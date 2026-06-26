@@ -22,6 +22,7 @@ enum ApiEndpoint {
   analyticsBestTime('/mobile/analytics/best-time'),
   notifications('/mobile/notifications'),
   notificationsReadAll('/mobile/notifications/read-all'),
+  mediaUpload('/mobile/media/upload'),
   deviceTokens('/mobile/device-tokens'),
   deviceTokensRemove('/mobile/device-tokens/remove');
 
@@ -59,6 +60,7 @@ class Api {
     ApiEndpoint.queueSlots: '/mobile/queue/slots',
     ApiEndpoint.analyticsSummary: '/mobile/analytics/summary',
     ApiEndpoint.analyticsBestTime: '/mobile/analytics/best-time',
+    ApiEndpoint.mediaUpload: '/mobile/media/upload',
   };
 
   static Uri uri(ApiEndpoint endpoint, {Map<String, dynamic>? query}) {
@@ -253,6 +255,38 @@ class ApiClient {
     String? accessToken,
     bool skipAuth = false,
   }) => patchJsonRaw(path, body, accessToken: accessToken, skipAuth: skipAuth);
+
+  Future<Map<String, dynamic>> postMultipart(
+    ApiEndpoint endpoint,
+    FormData body, {
+    String? accessToken,
+    bool skipAuth = false,
+  }) {
+    return postMultipartRaw(
+      Api.endpoints[endpoint] ?? endpoint.path,
+      body,
+      accessToken: accessToken,
+      skipAuth: skipAuth,
+    );
+  }
+
+  Future<Map<String, dynamic>> postMultipartRaw(
+    String path,
+    FormData body, {
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.postUri(
+        uriWithPath(path),
+        data: body,
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
 
   Future<Map<String, dynamic>> deleteJsonRaw(
     String path, {

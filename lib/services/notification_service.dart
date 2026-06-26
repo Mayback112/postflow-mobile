@@ -25,7 +25,10 @@ class NotificationService {
       '/mobile/notifications/$notificationId/read',
       const {},
     );
-    return NotificationItem.fromJson(response);
+    final notification = response['notification'] is Map<String, dynamic>
+        ? response['notification'] as Map<String, dynamic>
+        : response;
+    return NotificationItem.fromJson(notification);
   }
 
   Future<void> markAllRead() async {

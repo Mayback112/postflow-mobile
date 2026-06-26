@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
 import 'package:postflow/api/api.dart';
+import 'package:postflow/api/api_exception.dart';
 import 'package:postflow/models/post.dart';
 
 class PostService {
@@ -24,15 +26,23 @@ class PostService {
     bool? publishNow,
     required List<Map<String, dynamic>> targets,
   }) async {
-    final response = await _apiClient.postJson(ApiEndpoint.posts, {
+    final body = <String, dynamic>{
       'workspaceId': workspaceId,
       'content': content,
-      if (scheduledFor != null)
-        'scheduledFor': scheduledFor.toUtc().toIso8601String(),
-      if (isDraft != null) 'isDraft': isDraft,
-      if (publishNow != null) 'publishNow': publishNow,
       'targets': targets,
-    });
+    };
+
+    if (scheduledFor != null) {
+      body['scheduledFor'] = scheduledFor.toUtc().toIso8601String();
+    }
+    if (isDraft != null) {
+      body['isDraft'] = isDraft;
+    }
+    if (publishNow != null) {
+      body['publishNow'] = publishNow;
+    }
+
+    final response = await _apiClient.postJson(ApiEndpoint.posts, body);
     return Post.fromJson(response['post'] as Map<String, dynamic>);
   }
 
@@ -49,14 +59,25 @@ class PostService {
     bool? publishNow,
     List<Map<String, dynamic>>? targets,
   }) async {
-    final response = await _apiClient.patchJsonRaw('/mobile/posts/$postId', {
-      if (content != null) 'content': content,
-      if (scheduledFor != null)
-        'scheduledFor': scheduledFor.toUtc().toIso8601String(),
-      if (isDraft != null) 'isDraft': isDraft,
-      if (publishNow != null) 'publishNow': publishNow,
-      if (targets != null) 'targets': targets,
-    });
+    final body = <String, dynamic>{};
+
+    if (content != null) {
+      body['content'] = content;
+    }
+    if (scheduledFor != null) {
+      body['scheduledFor'] = scheduledFor.toUtc().toIso8601String();
+    }
+    if (isDraft != null) {
+      body['isDraft'] = isDraft;
+    }
+    if (publishNow != null) {
+      body['publishNow'] = publishNow;
+    }
+    if (targets != null) {
+      body['targets'] = targets;
+    }
+
+    final response = await _apiClient.patchJsonRaw('/mobile/posts/$postId', body);
     return Post.fromJson(response['post'] as Map<String, dynamic>);
   }
 
@@ -72,13 +93,49 @@ class PostService {
     return Post.fromJson(response['post'] as Map<String, dynamic>);
   }
 
-  /// Uploads [files] to the media upload endpoint and returns a list of URLs.
-  /// Stub until C3 (Cloudinary upload endpoint) is built — returns empty list.
+  Future<String> uploadMedia({
+    required PlatformFile file,
+    String? workspaceId,
+  }) async {
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      throw const ApiException('Selected file data is unavailable');
+    }
+
+    final formDataMap = <String, dynamic>{
+      'file': MultipartFile.fromBytes(bytes, filename: file.name),
+    };
+    if (workspaceId != null && workspaceId.isNotEmpty) {
+      formDataMap['workspaceId'] = workspaceId;
+    }
+
+    final formData = FormData.fromMap(formDataMap);
+
+    final response = await _apiClient.postMultipart(
+      ApiEndpoint.mediaUpload,
+      formData,
+    );
+
+    final url =
+        response['url'] as String? ??
+        response['secureUrl'] as String? ??
+        response['secure_url'] as String?;
+
+    if (url == null || url.isEmpty) {
+      throw const ApiException('Backend did not return an uploaded media URL');
+    }
+
+    return url;
+  }
+
   Future<List<String>> uploadMediaFiles({
     required String workspaceId,
     required List<PlatformFile> files,
   }) async {
-    // TODO(C3): implement real Cloudinary upload via POST /mobile/media/upload
-    return const [];
+    final urls = <String>[];
+    for (final file in files) {
+      urls.add(await uploadMedia(workspaceId: workspaceId, file: file));
+    }
+    return urls;
   }
 }

@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:postflow/api/api.dart';
 import 'package:postflow/api/api_exception.dart';
@@ -118,6 +121,80 @@ void main() {
     expect(capturedRequest.method, 'POST');
     expect(capturedRequest.uri.path, '/mobile/posts/post-1/retry');
     expect(post.id, 'post-1');
+  });
+
+  test('uploadMedia sends multipart file and returns the backend url', () async {
+    late RequestOptions capturedRequest;
+    final service = PostService(
+      apiClient: _mockApiClient((options) {
+        capturedRequest = options;
+        final formData = options.data as FormData;
+        final fileEntry = formData.files.single;
+        return {
+          'url': 'https://cdn.example.com/${fileEntry.value.filename}',
+          'publicId': 'media-1',
+          'resourceType': 'image',
+        };
+      }),
+    );
+
+    final url = await service.uploadMedia(
+      workspaceId: 'workspace-1',
+      file: PlatformFile(
+        name: 'photo.png',
+        size: 3,
+        bytes: Uint8List.fromList([1, 2, 3]),
+      ),
+    );
+
+    expect(url, 'https://cdn.example.com/photo.png');
+    expect(capturedRequest.method, 'POST');
+    expect(capturedRequest.uri.path, '/mobile/media/upload');
+    final formData = capturedRequest.data as FormData;
+    expect(
+      formData.fields.any((field) => field.key == 'workspaceId' && field.value == 'workspace-1'),
+      isTrue,
+    );
+    expect(formData.files.single.key, 'file');
+    expect(formData.files.single.value.filename, 'photo.png');
+  });
+
+  test('uploadMediaFiles uploads files sequentially and returns all urls', () async {
+    final seenFiles = <String>[];
+    final service = PostService(
+      apiClient: _mockApiClient((options) {
+        final formData = options.data as FormData;
+        final fileName = formData.files.single.value.filename ?? 'unknown';
+        seenFiles.add(fileName);
+        return {
+          'url': 'https://cdn.example.com/$fileName',
+          'publicId': fileName,
+          'resourceType': 'image',
+        };
+      }),
+    );
+
+    final urls = await service.uploadMediaFiles(
+      workspaceId: 'workspace-1',
+      files: [
+        PlatformFile(
+          name: 'photo-1.png',
+          size: 3,
+          bytes: Uint8List.fromList([1, 2, 3]),
+        ),
+        PlatformFile(
+          name: 'photo-2.png',
+          size: 3,
+          bytes: Uint8List.fromList([4, 5, 6]),
+        ),
+      ],
+    );
+
+    expect(seenFiles, ['photo-1.png', 'photo-2.png']);
+    expect(urls, [
+      'https://cdn.example.com/photo-1.png',
+      'https://cdn.example.com/photo-2.png',
+    ]);
   });
 
   test('createPost throws ApiException on backend error', () async {

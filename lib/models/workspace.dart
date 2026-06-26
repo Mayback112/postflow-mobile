@@ -3,7 +3,6 @@ class Workspace {
     required this.id,
     required this.name,
     this.ownerId,
-    this.zernioProfileId,
     this.createdAt,
     this.updatedAt,
   });
@@ -11,7 +10,6 @@ class Workspace {
   final String id;
   final String name;
   final String? ownerId;
-  final String? zernioProfileId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -20,7 +18,6 @@ class Workspace {
       id: json['id'] as String,
       name: json['name'] as String? ?? 'Workspace',
       ownerId: json['ownerId'] as String?,
-      zernioProfileId: json['zernioProfileId'] as String?,
       createdAt: _dateTimeFromJson(json['createdAt']),
       updatedAt: _dateTimeFromJson(json['updatedAt']),
     );
