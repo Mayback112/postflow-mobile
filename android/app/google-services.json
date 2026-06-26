@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "50020499211",
+    "project_id": "e-comm-35d5a",
+    "storage_bucket": "e-comm-35d5a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:50020499211:android:3b27d203dab06f80fa2c0e",
+        "android_client_info": {
+          "package_name": "com.postflow.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClrDTRqZKKxDl8d-Crg6bc1BUfM3FOXO4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
