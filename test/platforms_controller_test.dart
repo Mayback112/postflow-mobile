@@ -64,6 +64,7 @@ void main() {
       await controller.syncAccountsAfterConnect();
 
       expect(controller.connectStarted, isTrue);
+      expect(socialService.syncedPlatform, 'TIKTOK');
       expect(controller.accounts, const [instagram]);
 
       socialService.syncedAccounts = const [instagram, tiktok];
@@ -78,7 +79,7 @@ void main() {
     },
   );
 
-  test('handles denied mobile callback as visible error', () async {
+  test('handles denied social-connect callback as visible error', () async {
     final socialService = _FakeSocialAccountService(
       listedAccounts: const [instagram],
     );
@@ -91,7 +92,7 @@ void main() {
     await controller.connectPlatform('Facebook');
     await controller.handleConnectCallback(
       Uri.parse(
-        'postflow://social-accounts/zernio/callback?error=oauth_denied&platform=facebook',
+        'postflow://social-connect?status=error&state=connect-state-1&error=oauth_denied&connected=facebook&platform=facebook',
       ),
     );
 
@@ -119,7 +120,9 @@ void main() {
       ),
     );
 
+    expect(socialService.checkedPlatform, 'TIKTOK');
     expect(socialService.checkedState, 'connect-state-1');
+    expect(socialService.syncedPlatform, 'TIKTOK');
     expect(socialService.syncCount, 1);
     expect(controller.connectStarted, isFalse);
     expect(controller.successMessage, 'Social account connected successfully.');
@@ -169,6 +172,7 @@ void main() {
     await controller.syncAccountsAfterConnect();
 
     expect(socialService.checkedState, 'connect-state-1');
+    expect(socialService.syncedPlatform, 'TIKTOK');
     expect(socialService.syncCount, 1);
     expect(controller.connectStarted, isFalse);
     expect(controller.accountForPlatform('TIKTOK'), tiktok);
@@ -192,6 +196,7 @@ void main() {
     await controller.connectPlatform('Facebook');
     await controller.syncAccountsAfterConnect();
 
+    expect(socialService.checkedPlatform, 'FACEBOOK');
     expect(socialService.syncCount, 0);
     expect(controller.connectStarted, isFalse);
     expect(controller.errorMessage, contains('facebook connection'));
@@ -229,7 +234,9 @@ class _FakeSocialAccountService extends SocialAccountService {
   List<SocialAccount> syncedAccounts;
   SocialConnectStatusResult? statusResult;
   String? connectedPlatform;
+  String? checkedPlatform;
   String? checkedState;
+  String? syncedPlatform;
   int syncCount = 0;
 
   @override
@@ -243,8 +250,10 @@ class _FakeSocialAccountService extends SocialAccountService {
 
   @override
   Future<SocialConnectStatusResult> connectStatus({
+    required String platform,
     required String state,
   }) async {
+    checkedPlatform = platform;
     checkedState = state;
     return statusResult ??
         const SocialConnectStatusResult(status: SocialConnectStatus.unknown);
@@ -260,7 +269,9 @@ class _FakeSocialAccountService extends SocialAccountService {
   @override
   Future<List<SocialAccount>> syncAccounts({
     required String workspaceId,
+    required String platform,
   }) async {
+    syncedPlatform = platform;
     syncCount += 1;
     return syncedAccounts;
   }

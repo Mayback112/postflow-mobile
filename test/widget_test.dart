@@ -35,5 +35,6 @@ void main() {
       ),
       isTrue,
     );
+    expect(Routes.isSocialConnectRoute('/zernio/callback'), isFalse);
   });
 }

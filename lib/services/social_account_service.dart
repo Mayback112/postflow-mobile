@@ -14,8 +14,8 @@ class SocialAccountService {
     required String workspaceId,
     required String platform,
   }) async {
-    final response = await _apiClient.postJson(
-      ApiEndpoint.socialZernioConnect,
+    final response = await _apiClient.postJsonRaw(
+      Api.socialAccountActionPath(platform: platform, action: 'connect'),
       {'workspaceId': workspaceId, 'platform': platform},
     );
 
@@ -41,10 +41,11 @@ class SocialAccountService {
   }
 
   Future<SocialConnectStatusResult> connectStatus({
+    required String platform,
     required String state,
   }) async {
-    final response = await _apiClient.getJson(
-      ApiEndpoint.socialZernioConnectStatus,
+    final response = await _apiClient.getJsonRaw(
+      Api.socialAccountActionPath(platform: platform, action: 'connect-status'),
       query: {'state': state},
     );
     return SocialConnectStatusResult.fromJson(response);
@@ -52,10 +53,12 @@ class SocialAccountService {
 
   Future<List<SocialAccount>> syncAccounts({
     required String workspaceId,
+    required String platform,
   }) async {
-    final response = await _apiClient.postJson(ApiEndpoint.socialZernioSync, {
-      'workspaceId': workspaceId,
-    });
+    final response = await _apiClient.postJsonRaw(
+      Api.socialAccountActionPath(platform: platform, action: 'sync'),
+      {'workspaceId': workspaceId},
+    );
     return _accountsFromResponse(response);
   }
 

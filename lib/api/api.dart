@@ -12,9 +12,6 @@ enum ApiEndpoint {
   authMe('/mobile/auth/me'),
   workspaces('/mobile/workspaces'),
   socialAccounts('/mobile/social-accounts'),
-  socialZernioConnect('/mobile/social-accounts/zernio/connect'),
-  socialZernioConnectStatus('/mobile/social-accounts/zernio/connect-status'),
-  socialZernioSync('/mobile/social-accounts/zernio/sync'),
   posts('/mobile/posts'),
   queuePreview('/mobile/queue/preview'),
   queueSlots('/mobile/queue/slots'),
@@ -43,6 +40,15 @@ class Api {
     return 'https://nonrepudiable-richie-nonceremonious.ngrok-free.dev';
   }
 
+  static String socialAccountActionPath({
+    required String platform,
+    required String action,
+  }) {
+    final normalizedPlatform = platform.trim().toLowerCase();
+    final normalizedAction = action.trim();
+    return '/mobile/social-accounts/$normalizedPlatform/$normalizedAction';
+  }
+
   static const Map<ApiEndpoint, String> endpoints = {
     ApiEndpoint.authSign: '/mobile/auth/sign',
     ApiEndpoint.authGoogle: '/mobile/auth/google',
@@ -51,10 +57,6 @@ class Api {
     ApiEndpoint.authMe: '/mobile/auth/me',
     ApiEndpoint.workspaces: '/mobile/workspaces',
     ApiEndpoint.socialAccounts: '/mobile/social-accounts',
-    ApiEndpoint.socialZernioConnect: '/mobile/social-accounts/zernio/connect',
-    ApiEndpoint.socialZernioConnectStatus:
-        '/mobile/social-accounts/zernio/connect-status',
-    ApiEndpoint.socialZernioSync: '/mobile/social-accounts/zernio/sync',
     ApiEndpoint.posts: '/mobile/posts',
     ApiEndpoint.queuePreview: '/mobile/queue/preview',
     ApiEndpoint.queueSlots: '/mobile/queue/slots',

@@ -123,6 +123,6 @@ class Routes {
               query.containsKey('error'));
     }
 
-    return uri.path.startsWith('/zernio/callback');
+    return false;
   }
 }

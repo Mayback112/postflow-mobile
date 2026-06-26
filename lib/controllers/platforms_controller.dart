@@ -129,14 +129,14 @@ class PlatformsController extends ChangeNotifier {
 
   bool _isSocialConnectCallback(Uri uri) {
     if (uri.scheme != 'postflow') return false;
-    if (uri.host == 'social-connect') return true;
-    return uri.host == 'social-accounts' &&
-        uri.path.startsWith('/zernio/callback');
+    return uri.host == 'social-connect' ||
+        uri.path.startsWith('/social-connect');
   }
 
   Future<void> syncAccountsAfterConnect() async {
     final workspace = _workspace;
-    if (workspace == null || _isSyncing) return;
+    final platform = _pendingConnectPlatform;
+    if (workspace == null || _isSyncing || platform == null) return;
 
     _isSyncing = true;
     _errorMessage = null;
@@ -173,6 +173,7 @@ class PlatformsController extends ChangeNotifier {
 
       var accounts = await _socialAccountService.syncAccounts(
         workspaceId: workspace.id,
+        platform: platform,
       );
       if (accounts.isEmpty) {
         accounts = await _socialAccountService.listAccounts(
@@ -232,9 +233,18 @@ class PlatformsController extends ChangeNotifier {
 
   Future<SocialConnectStatusResult?> _loadConnectStatusIfAvailable() async {
     final state = _pendingConnectState;
-    if (state == null || state.isEmpty) return null;
+    final platform = _pendingConnectPlatform;
+    if (state == null ||
+        state.isEmpty ||
+        platform == null ||
+        platform.isEmpty) {
+      return null;
+    }
     try {
-      return await _socialAccountService.connectStatus(state: state);
+      return await _socialAccountService.connectStatus(
+        platform: platform,
+        state: state,
+      );
     } on ApiException catch (error) {
       if (error.statusCode == 404) return null;
       rethrow;
