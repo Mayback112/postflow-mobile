@@ -7,13 +7,13 @@ class AnalyticsService {
 
   final ApiClient _apiClient;
 
-  Future<PostAnalytics?> getPostAnalytics(String postId) async {
+  Future<PostAnalyticsSummary?> getPostAnalytics(String postId) async {
     try {
       final response = await _apiClient.getJsonRaw(
         '/mobile/posts/$postId/analytics',
       );
       if (response['postAnalytics'] == null) return null;
-      return PostAnalytics.fromJson(
+      return PostAnalyticsSummary.fromJson(
         response['postAnalytics'] as Map<String, dynamic>,
       );
     } catch (_) {

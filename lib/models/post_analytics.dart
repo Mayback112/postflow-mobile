@@ -45,6 +45,82 @@ class PostAnalytics {
   }
 }
 
+/// Summary returned by GET /mobile/posts/:id/analytics
+class PostAnalyticsSummary {
+  final String postId;
+  final String workspaceId;
+  final String status;
+  final DateTime? publishedAt;
+  final DateTime? fetchedAt;
+  final AnalyticsTotals totals;
+  final List<PostTargetAnalytics> targetAnalytics;
+
+  const PostAnalyticsSummary({
+    required this.postId,
+    required this.workspaceId,
+    required this.status,
+    this.publishedAt,
+    this.fetchedAt,
+    required this.totals,
+    required this.targetAnalytics,
+  });
+
+  factory PostAnalyticsSummary.fromJson(Map<String, dynamic> json) {
+    return PostAnalyticsSummary(
+      postId: json['postId'] as String,
+      workspaceId: json['workspaceId'] as String,
+      status: json['status'] as String? ?? '',
+      publishedAt: json['publishedAt'] != null
+          ? DateTime.tryParse(json['publishedAt'] as String)
+          : null,
+      fetchedAt: json['fetchedAt'] != null
+          ? DateTime.tryParse(json['fetchedAt'] as String)
+          : null,
+      totals: AnalyticsTotals.fromJson(json['totals'] as Map<String, dynamic>),
+      targetAnalytics: (json['targetAnalytics'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(PostTargetAnalytics.fromJson)
+          .toList(),
+    );
+  }
+}
+
+class PostTargetAnalytics {
+  final String postTargetId;
+  final String socialAccountId;
+  final String platform;
+  final String status;
+  final DateTime? publishedAt;
+  final DateTime? fetchedAt;
+  final AnalyticsTotals metrics;
+
+  const PostTargetAnalytics({
+    required this.postTargetId,
+    required this.socialAccountId,
+    required this.platform,
+    required this.status,
+    this.publishedAt,
+    this.fetchedAt,
+    required this.metrics,
+  });
+
+  factory PostTargetAnalytics.fromJson(Map<String, dynamic> json) {
+    return PostTargetAnalytics(
+      postTargetId: json['postTargetId'] as String,
+      socialAccountId: json['socialAccountId'] as String,
+      platform: json['platform'] as String,
+      status: json['status'] as String? ?? '',
+      publishedAt: json['publishedAt'] != null
+          ? DateTime.tryParse(json['publishedAt'] as String)
+          : null,
+      fetchedAt: json['fetchedAt'] != null
+          ? DateTime.tryParse(json['fetchedAt'] as String)
+          : null,
+      metrics: AnalyticsTotals.fromJson(json['metrics'] as Map<String, dynamic>),
+    );
+  }
+}
+
 class WorkspaceAnalyticsSummary {
   final String workspaceId;
   final String range;
