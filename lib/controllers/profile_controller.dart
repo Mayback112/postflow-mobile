@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:postflow/api/api_exception.dart';
 import 'package:postflow/models/auth_models.dart';
-import 'package:postflow/models/post_models.dart';
+import 'package:postflow/models/post.dart';
 import 'package:postflow/models/social_account.dart';
 import 'package:postflow/services/auth_service.dart';
 import 'package:postflow/services/post_service.dart';
@@ -27,7 +27,7 @@ class ProfileController extends ChangeNotifier {
   bool _isLoading = true;
   String? _errorMessage;
   AuthUser? _user;
-  List<MobilePost> _posts = const [];
+  List<Post> _posts = const [];
   List<SocialAccount> _accounts = const [];
 
   bool get isLoading => _isLoading;
@@ -55,7 +55,7 @@ class ProfileController extends ChangeNotifier {
       ]);
 
       _user = user;
-      _posts = results[0] as List<MobilePost>;
+      _posts = results[0] as List<Post>;
       _accounts = results[1] as List<SocialAccount>;
       _isLoading = false;
       notifyListeners();

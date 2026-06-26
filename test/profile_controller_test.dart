@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:postflow/api/api_exception.dart';
 import 'package:postflow/controllers/profile_controller.dart';
 import 'package:postflow/models/auth_models.dart';
-import 'package:postflow/models/post_models.dart';
+import 'package:postflow/models/post.dart';
 import 'package:postflow/models/social_account.dart';
 import 'package:postflow/models/workspace.dart';
 import 'package:postflow/services/auth_service.dart';
@@ -22,33 +22,9 @@ void main() {
   test('loads current profile stats and connected accounts', () async {
     final authService = _FakeAuthService(user: user);
     final postService = _FakePostService([
-      const MobilePost(
-        id: 'post-1',
-        workspaceId: 'workspace-1',
-        status: 'SCHEDULED',
-        caption: 'Scheduled post',
-        hashtags: [],
-        mediaAssets: [],
-        platforms: [],
-      ),
-      const MobilePost(
-        id: 'post-2',
-        workspaceId: 'workspace-1',
-        status: 'DRAFT',
-        caption: 'Draft post',
-        hashtags: [],
-        mediaAssets: [],
-        platforms: [],
-      ),
-      const MobilePost(
-        id: 'post-3',
-        workspaceId: 'workspace-1',
-        status: 'CANCELED',
-        caption: 'Canceled post',
-        hashtags: [],
-        mediaAssets: [],
-        platforms: [],
-      ),
+      _post(id: 'post-1', status: 'SCHEDULED'),
+      _post(id: 'post-2', status: 'DRAFT'),
+      _post(id: 'post-3', status: 'PUBLISHED'),
     ]);
     final socialAccountService = _FakeSocialAccountService([
       const SocialAccount(
@@ -56,7 +32,7 @@ void main() {
         workspaceId: 'workspace-1',
         platform: 'INSTAGRAM',
         displayName: 'Brand Instagram',
-        provider: 'ZERNIO',
+        provider: 'POSTFLOW',
         isActive: true,
       ),
       const SocialAccount(
@@ -64,7 +40,7 @@ void main() {
         workspaceId: 'workspace-1',
         platform: 'YOUTUBE',
         displayName: 'Old YouTube',
-        provider: 'ZERNIO',
+        provider: 'POSTFLOW',
         isActive: false,
       ),
     ]);
@@ -83,7 +59,7 @@ void main() {
     expect(controller.isLoading, isFalse);
     expect(controller.errorMessage, isNull);
     expect(controller.user?.email, 'ada@example.com');
-    expect(controller.postCount, 2);
+    expect(controller.postCount, 3);
     expect(controller.scheduledCount, 1);
     expect(controller.connectedPlatformCount, 1);
     expect(controller.connectedAccounts.single.displayName, 'Brand Instagram');
@@ -100,6 +76,18 @@ void main() {
     expect(controller.user, isNull);
     expect(controller.errorMessage, 'Unauthorized');
   });
+}
+
+Post _post({required String id, required String status}) {
+  return Post(
+    id: id,
+    workspaceId: 'workspace-1',
+    content: '$status post',
+    status: status,
+    createdAt: DateTime.utc(2026, 6, 14),
+    updatedAt: DateTime.utc(2026, 6, 14),
+    postTargets: const [],
+  );
 }
 
 class _FakeAuthService extends AuthService {
@@ -120,7 +108,6 @@ class _FakeAuthService extends AuthService {
 
 class _FakeWorkspaceService extends WorkspaceService {
   _FakeWorkspaceService(this.workspace);
-
   final Workspace workspace;
 
   @override
@@ -130,14 +117,11 @@ class _FakeWorkspaceService extends WorkspaceService {
 class _FakePostService extends PostService {
   _FakePostService(this.posts);
 
-  final List<MobilePost> posts;
+  final List<Post> posts;
   String? capturedWorkspaceId;
 
   @override
-  Future<List<MobilePost>> listPosts({
-    required String workspaceId,
-    String? status,
-  }) async {
+  Future<List<Post>> listPosts({required String workspaceId}) async {
     capturedWorkspaceId = workspaceId;
     return posts;
   }

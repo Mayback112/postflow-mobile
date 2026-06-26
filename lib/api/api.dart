@@ -19,7 +19,11 @@ enum ApiEndpoint {
   queuePreview('/mobile/queue/preview'),
   queueSlots('/mobile/queue/slots'),
   analyticsSummary('/mobile/analytics/summary'),
-  analyticsBestTime('/mobile/analytics/best-time');
+  analyticsBestTime('/mobile/analytics/best-time'),
+  notifications('/mobile/notifications'),
+  notificationsReadAll('/mobile/notifications/read-all'),
+  deviceTokens('/mobile/device-tokens'),
+  deviceTokensRemove('/mobile/device-tokens/remove');
 
   const ApiEndpoint(this.path);
 
@@ -242,6 +246,13 @@ class ApiClient {
       ),
     );
   }
+
+  Future<Map<String, dynamic>> patchJsonPath(
+    String path,
+    Map<String, dynamic>? body, {
+    String? accessToken,
+    bool skipAuth = false,
+  }) => patchJsonRaw(path, body, accessToken: accessToken, skipAuth: skipAuth);
 
   Future<Map<String, dynamic>> deleteJsonRaw(
     String path, {

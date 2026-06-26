@@ -83,7 +83,7 @@ class CreateManualController extends ChangeNotifier {
         workspaceId: workspace.id,
       );
       _workspace = workspace;
-      _accounts = accounts.where(_isPublishableZernioAccount).toList();
+      _accounts = accounts.where((a) => a.isActive).toList();
       _pruneIncompatibleSelectedAccounts();
       _isLoadingTargets = false;
       notifyListeners();
@@ -200,10 +200,10 @@ class CreateManualController extends ChangeNotifier {
       return CreatePostResult.needsSchedule;
     }
 
-    final targets = selectedTargets();
+    final selectedAccounts = _selectedAccounts();
     final caption = _caption.trim();
 
-    if (targets.isEmpty) {
+    if (selectedAccounts.isEmpty) {
       _setError('Choose at least one connected account.');
       return CreatePostResult.needsSchedule;
     }
@@ -224,21 +224,56 @@ class CreateManualController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final mediaAssetIds = usesMedia
-          ? await _postService.uploadAndRegisterMedia(
+      // Upload media files and collect URLs (C3 wires real upload; stub returns [] for now)
+      final mediaUrls = usesMedia
+          ? await _postService.uploadMediaFiles(
               workspaceId: workspace.id,
-              platform: targets.first.platform,
               files: _selectedResources,
             )
           : <String>[];
 
+      // Build content: caption + hashtags
+      final hashtagStr = _hashtags.isEmpty ? '' : ' ${_hashtags.join(' ')}';
+      final content = '$caption$hashtagStr'.trim();
+
+      // Build targets per account
+      final targets = selectedAccounts.map((account) {
+        final platform = account.platform.toUpperCase();
+        final Map<String, dynamic> platformSpecificData = {};
+        final Map<String, dynamic> tiktokSettings = {};
+
+        if (platform == 'INSTAGRAM') {
+          platformSpecificData['accountType'] = 'BUSINESS';
+          platformSpecificData['postType'] = 'FEED';
+        } else if (platform == 'LINKEDIN') {
+          platformSpecificData['accountType'] = 'PERSONAL';
+        } else if (platform == 'FACEBOOK') {
+          platformSpecificData['pageId'] = 'mock-page-id';
+        } else if (platform == 'TIKTOK') {
+          final isTikTokPhotoPost = _mediaKind == _MediaKind.image;
+          tiktokSettings['privacyLevel'] = 'PUBLIC';
+          tiktokSettings['content_preview_confirmed'] = true;
+          tiktokSettings['express_consent_given'] = true;
+          if (isTikTokPhotoPost) {
+            tiktokSettings['autoAddMusic'] = _tiktokAutoAddMusic;
+          }
+        }
+
+        return {
+          'socialAccountId': account.id,
+          'mediaUrls': mediaUrls,
+          if (platformSpecificData.isNotEmpty)
+            'platformSpecificData': platformSpecificData,
+          if (tiktokSettings.isNotEmpty) 'tiktokSettings': tiktokSettings,
+        };
+      }).toList();
+
       await _postService.createPost(
         workspaceId: workspace.id,
-        caption: caption,
-        hashtags: _hashtags,
-        mediaAssetIds: mediaAssetIds,
-        platforms: targets,
-        scheduledAt: schedule ? _scheduledAt : null,
+        content: content,
+        scheduledFor: schedule ? _scheduledAt : null,
+        isDraft: !schedule && _scheduledAt == null,
+        targets: targets,
       );
 
       _isSubmitting = false;
@@ -254,17 +289,10 @@ class CreateManualController extends ChangeNotifier {
     }
   }
 
-  List<PostPlatformTarget> selectedTargets() {
-    return _selectedAccounts().map((account) {
-      final isTikTokPhotoPost =
-          _isTikTokAccount(account) && _mediaKind == _MediaKind.image;
-      return PostPlatformTarget(
-        platform: account.platform,
-        accountId: account.id,
-        publishOptions: isTikTokPhotoPost
-            ? {'autoAddMusic': _tiktokAutoAddMusic}
-            : null,
-      );
+  List<Map<String, dynamic>> selectedTargets() {
+    return _selectedAccounts().map((account) => {
+      'socialAccountId': account.id,
+      'platform': account.platform,
     }).toList();
   }
 
@@ -404,12 +432,6 @@ class CreateManualController extends ChangeNotifier {
 
   bool _isTikTokAccount(SocialAccount account) {
     return account.platform.toUpperCase() == 'TIKTOK';
-  }
-
-  bool _isPublishableZernioAccount(SocialAccount account) {
-    return account.isActive &&
-        account.provider.toUpperCase() == 'ZERNIO' &&
-        account.zernioAccountId?.isNotEmpty == true;
   }
 
   bool _isImageFile(PlatformFile file) {

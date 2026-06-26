@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:postflow/api/api.dart';
 import 'package:postflow/models/post.dart';
 
@@ -69,5 +70,15 @@ class PostService {
       null,
     );
     return Post.fromJson(response['post'] as Map<String, dynamic>);
+  }
+
+  /// Uploads [files] to the media upload endpoint and returns a list of URLs.
+  /// Stub until C3 (Cloudinary upload endpoint) is built — returns empty list.
+  Future<List<String>> uploadMediaFiles({
+    required String workspaceId,
+    required List<PlatformFile> files,
+  }) async {
+    // TODO(C3): implement real Cloudinary upload via POST /mobile/media/upload
+    return const [];
   }
 }
