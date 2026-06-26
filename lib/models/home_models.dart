@@ -1,3 +1,5 @@
+import 'package:postflow/models/post.dart';
+
 class PlatformItem {
   final String name;
 
@@ -5,6 +7,7 @@ class PlatformItem {
 }
 
 class ScheduleItem {
+  final String id;
   final String title;
   final String subtitle;
   final String date;
@@ -13,8 +16,10 @@ class ScheduleItem {
   final String status;
   final String contentType;
   final String imageUrl;
+  final Post? originalPost;
 
   const ScheduleItem({
+    required this.id,
     required this.title,
     required this.subtitle,
     required this.date,
@@ -23,19 +28,24 @@ class ScheduleItem {
     this.platform = '',
     this.status = '',
     this.contentType = '',
+    this.originalPost,
   });
 }
 
 class UpcomingPost {
+  final String id;
   final String title;
   final String subtitle;
   final String scheduledText;
   final String imageUrl;
+  final Post? originalPost;
 
   const UpcomingPost({
+    required this.id,
     required this.title,
     required this.subtitle,
     required this.scheduledText,
     required this.imageUrl,
+    this.originalPost,
   });
 }

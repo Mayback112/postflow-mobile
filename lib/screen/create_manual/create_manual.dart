@@ -1,6 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:postflow/controllers/create_post_controller.dart';
 import 'package:postflow/screen/navigation/side_nav_overlay.dart';
+import 'package:postflow/screen/platforms/platform_models.dart';
 import 'package:postflow/theme/home_theme.dart';
 
 part 'widgets/create_manual_widgets.dart';
@@ -19,6 +21,7 @@ class _CreateManualScreenState extends State<CreateManualScreen> {
   final TextEditingController _hashtagController = TextEditingController();
   final Set<String> _selectedPlatforms = {};
   final List<String> _hashtags = [];
+  late final CreatePostController _controller;
 
   bool _isSideNavOpen = false;
   DateTime? _scheduledAt;
@@ -26,10 +29,26 @@ class _CreateManualScreenState extends State<CreateManualScreen> {
   _PostMediaType _selectedType = _PostMediaType.image;
 
   @override
+  void initState() {
+    super.initState();
+    _controller = CreatePostController();
+    _controller.addListener(_onControllerChanged);
+    _controller.loadInitialData();
+  }
+
+  @override
   void dispose() {
     _captionController.dispose();
     _hashtagController.dispose();
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _openSideNav() => setState(() => _isSideNavOpen = true);
@@ -37,6 +56,23 @@ class _CreateManualScreenState extends State<CreateManualScreen> {
   void _closeSideNav() => setState(() => _isSideNavOpen = false);
 
   void _togglePlatform(String platform) {
+    final isConnected = _connectedPlatformNames.contains(platform);
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please connect an active $platform account on the Platforms screen first.',
+          ),
+          action: SnackBarAction(
+            label: 'Connect',
+            onPressed: () {
+              Navigator.of(context).pushNamed('/Platforms');
+            },
+          ),
+        ),
+      );
+      return;
+    }
     setState(() {
       if (_selectedPlatforms.contains(platform)) {
         _selectedPlatforms.remove(platform);
@@ -44,6 +80,29 @@ class _CreateManualScreenState extends State<CreateManualScreen> {
         _selectedPlatforms.add(platform);
       }
     });
+  }
+
+  List<String> get _connectedPlatformNames {
+    return _controller.accounts.map((acc) {
+      switch (acc.platform.toUpperCase()) {
+        case 'INSTAGRAM':
+          return 'Instagram';
+        case 'FACEBOOK':
+          return 'Facebook';
+        case 'TIKTOK':
+          return 'TikTok';
+        case 'YOUTUBE':
+          return 'YouTube';
+        case 'LINKEDIN':
+          return 'LinkedIn';
+        case 'X':
+          return 'X';
+        case 'THREADS':
+          return 'Threads';
+        default:
+          return acc.platform;
+      }
+    }).toList();
   }
 
   void _selectType(_PostMediaType type) {
@@ -92,13 +151,45 @@ class _CreateManualScreenState extends State<CreateManualScreen> {
     _openScheduleSheet();
   }
 
-  void _finishSchedule() {
-    if (_scheduledAt == null) {
-      _openScheduleSheet();
-      return;
-    }
+  Future<void> _submitPost({bool publishNow = false}) async {
+    final combinedContent = [
+      if (_captionController.text.trim().isNotEmpty)
+        _captionController.text.trim(),
+      if (_hashtags.isNotEmpty) _hashtags.join(' '),
+    ].join('\n\n');
 
-    Navigator.of(context).pushNamed('/Scheduled');
+    final post = await _controller.submitPost(
+      baseContent: combinedContent,
+      selectedPlatformNames: _selectedPlatforms.toList(),
+      hasMedia: _selectedResource != null,
+      isVideo: _selectedType == _PostMediaType.video,
+      scheduledFor: _scheduledAt,
+      publishNow: publishNow,
+      isDraft: false,
+    );
+
+    if (post != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _controller.successMessage ?? 'Post created successfully!',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pushReplacementNamed('/Scheduled');
+    } else if (_controller.errorMessage != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_controller.errorMessage!),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _finishSchedule() {
+    _submitPost();
   }
 
   void _openScheduleSheet() {
@@ -281,79 +372,122 @@ class _CreateManualScreenState extends State<CreateManualScreen> {
                 children: [
                   _PostContentTopBar(onMenuTap: _openSideNav),
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _ComposeHeader(
-                            scheduleLabel: _scheduleLabel(),
-                            isScheduled: _scheduledAt != null,
-                          ),
-                          const SizedBox(height: 14),
-                          _InstagramComposeCard(
-                            selectedType: _selectedType,
-                            selectedResource: _selectedResource,
-                            captionController: _captionController,
-                            hashtagController: _hashtagController,
-                            hashtags: _hashtags,
-                            selectedPlatforms: _selectedPlatforms,
-                            onTypeSelected: _selectType,
-                            onPickResource: _pickResource,
-                            onCaptionChanged: () => setState(() {}),
-                            onAddHashtag: _addHashtag,
-                            onRemoveHashtag: _removeHashtag,
-                            onPlatformToggled: _togglePlatform,
-                          ),
-                          const SizedBox(height: 14),
-                          _PostPreviewCard(
-                            resource: _selectedResource,
-                            caption: _captionController.text,
-                            hashtags: _hashtags,
-                            isVideo: _selectedType == _PostMediaType.video,
-                            platforms: _selectedPlatforms.toList(),
-                          ),
-                          const SizedBox(height: 16),
-                          FilledButton.icon(
-                            onPressed: _continueToSchedule,
-                            icon: const Icon(
-                              Icons.calendar_month_rounded,
-                              size: 18,
-                            ),
-                            label: Text(
-                              _scheduledAt == null
-                                  ? 'Continue to schedule'
-                                  : 'Update schedule',
-                            ),
-                            style: _primaryButtonStyle(),
-                          ),
-                          const SizedBox(height: 10),
-                          OutlinedButton(
-                            onPressed: _finishSchedule,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(48, 52),
-                              foregroundColor: kBlue,
-                              side: const BorderSide(color: kBlue),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  homeRadiusMd,
+                    child: _controller.workspace == null
+                        ? Center(
+                            child: _controller.isLoading
+                                ? const CircularProgressIndicator(color: kBlue)
+                                : Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          _controller.errorMessage ??
+                                              'Failed to load workspace.',
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: kTextGrey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        FilledButton(
+                                          onPressed:
+                                              _controller.loadInitialData,
+                                          style: _primaryButtonStyle(),
+                                          child: const Text('Retry'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          )
+                        : SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _ComposeHeader(
+                                  scheduleLabel: _scheduleLabel(),
+                                  isScheduled: _scheduledAt != null,
                                 ),
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            child: Text(
-                              _scheduledAt == null
-                                  ? 'Schedule later'
-                                  : 'Add to queue',
+                                const SizedBox(height: 14),
+                                _InstagramComposeCard(
+                                  selectedType: _selectedType,
+                                  selectedResource: _selectedResource,
+                                  captionController: _captionController,
+                                  hashtagController: _hashtagController,
+                                  hashtags: _hashtags,
+                                  selectedPlatforms: _selectedPlatforms,
+                                  onTypeSelected: _selectType,
+                                  onPickResource: _pickResource,
+                                  onCaptionChanged: () => setState(() {}),
+                                  onAddHashtag: _addHashtag,
+                                  onRemoveHashtag: _removeHashtag,
+                                  onPlatformToggled: _togglePlatform,
+                                ),
+                                const SizedBox(height: 14),
+                                _PostPreviewCard(
+                                  resource: _selectedResource,
+                                  caption: _captionController.text,
+                                  hashtags: _hashtags,
+                                  isVideo:
+                                      _selectedType == _PostMediaType.video,
+                                  platforms: _selectedPlatforms.toList(),
+                                ),
+                                const SizedBox(height: 16),
+                                if (_controller.isLoading)
+                                  const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 20.0,
+                                      ),
+                                      child: CircularProgressIndicator(
+                                        color: kBlue,
+                                      ),
+                                    ),
+                                  )
+                                else ...[
+                                  FilledButton.icon(
+                                    onPressed: _continueToSchedule,
+                                    icon: const Icon(
+                                      Icons.calendar_month_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      _scheduledAt == null
+                                          ? 'Continue to schedule'
+                                          : 'Update schedule',
+                                    ),
+                                    style: _primaryButtonStyle(),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  OutlinedButton(
+                                    onPressed: _finishSchedule,
+                                    style: OutlinedButton.styleFrom(
+                                      minimumSize: const Size(48, 52),
+                                      foregroundColor: kBlue,
+                                      side: const BorderSide(color: kBlue),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          homeRadiusMd,
+                                        ),
+                                      ),
+                                      textStyle: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _scheduledAt == null
+                                          ? 'Schedule later'
+                                          : 'Add to queue',
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               );

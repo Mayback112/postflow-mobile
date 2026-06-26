@@ -2,14 +2,15 @@ part of '../home.dart';
 
 class _HomeContent extends StatelessWidget {
   final bool isWide;
+  final HomeController homeController;
 
-  const _HomeContent({required this.isWide});
+  const _HomeContent({required this.isWide, required this.homeController});
 
   @override
   Widget build(BuildContext context) {
-    final hasUpcomingPost = upcomingPost != null;
-    final hasPlatforms = connectedPlatforms.isNotEmpty;
-    final hasSchedules = schedules.isNotEmpty;
+    final hasUpcomingPost = homeController.upcomingPost != null;
+    final hasPlatforms = homeController.connectedPlatforms.isNotEmpty;
+    final hasSchedules = homeController.schedules.isNotEmpty;
     final isEmpty = !hasUpcomingPost && !hasPlatforms && !hasSchedules;
 
     final content = Column(
@@ -19,7 +20,10 @@ class _HomeContent extends StatelessWidget {
           const _HomeEntry(index: 0, child: HomeEmptyState()),
         ] else ...[
           if (hasUpcomingPost) ...[
-            _HomeEntry(index: 0, child: UpcomingPostCard(post: upcomingPost!)),
+            _HomeEntry(
+              index: 0,
+              child: UpcomingPostCard(post: homeController.upcomingPost!),
+            ),
             const SizedBox(height: 16),
           ],
           const _HomeEntry(index: 1, child: CreateWithAiCard()),
@@ -27,23 +31,25 @@ class _HomeContent extends StatelessWidget {
           _HomeEntry(
             index: 2,
             child: _HomeStatsStrip(
-              scheduledCount: schedules.length,
-              channelCount: connectedPlatforms.length,
+              scheduledCount: homeController.schedules.length,
+              channelCount: homeController.connectedPlatforms.length,
               readyPercent: hasSchedules ? 86 : 0,
             ),
           ),
           if (hasPlatforms) ...[
             const SizedBox(height: 16),
-            const _HomeEntry(
+            _HomeEntry(
               index: 3,
-              child: ConnectedPlatformsCard(platforms: connectedPlatforms),
+              child: ConnectedPlatformsCard(
+                platforms: homeController.connectedPlatforms,
+              ),
             ),
           ],
           if (hasSchedules) ...[
             const SizedBox(height: 20),
-            const _HomeEntry(
+            _HomeEntry(
               index: 4,
-              child: SchedulesSection(schedules: schedules),
+              child: SchedulesSection(schedules: homeController.schedules),
             ),
           ],
         ],

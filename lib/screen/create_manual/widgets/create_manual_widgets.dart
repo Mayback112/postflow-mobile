@@ -301,7 +301,7 @@ class _InstagramComposeCard extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: ['Instagram', 'TikTok', 'YouTube', 'LinkedIn']
+            children: supportedPlatformNames
                 .map(
                   (platform) => _PlatformChip(
                     label: platform,

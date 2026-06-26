@@ -14,7 +14,12 @@ enum ApiEndpoint {
   socialAccounts('/mobile/social-accounts'),
   socialZernioConnect('/mobile/social-accounts/zernio/connect'),
   socialZernioConnectStatus('/mobile/social-accounts/zernio/connect-status'),
-  socialZernioSync('/mobile/social-accounts/zernio/sync');
+  socialZernioSync('/mobile/social-accounts/zernio/sync'),
+  posts('/mobile/posts'),
+  queuePreview('/mobile/queue/preview'),
+  queueSlots('/mobile/queue/slots'),
+  analyticsSummary('/mobile/analytics/summary'),
+  analyticsBestTime('/mobile/analytics/best-time');
 
   const ApiEndpoint(this.path);
 
@@ -45,6 +50,11 @@ class Api {
     ApiEndpoint.socialZernioConnectStatus:
         '/mobile/social-accounts/zernio/connect-status',
     ApiEndpoint.socialZernioSync: '/mobile/social-accounts/zernio/sync',
+    ApiEndpoint.posts: '/mobile/posts',
+    ApiEndpoint.queuePreview: '/mobile/queue/preview',
+    ApiEndpoint.queueSlots: '/mobile/queue/slots',
+    ApiEndpoint.analyticsSummary: '/mobile/analytics/summary',
+    ApiEndpoint.analyticsBestTime: '/mobile/analytics/best-time',
   };
 
   static Uri uri(ApiEndpoint endpoint, {Map<String, dynamic>? query}) {
@@ -101,6 +111,15 @@ class ApiClient {
     );
   }
 
+  Uri uriWithPath(String path, {Map<String, dynamic>? query}) {
+    return _baseUri.replace(
+      path: path,
+      queryParameters: query?.map(
+        (key, value) => MapEntry(key, value.toString()),
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> postJson(
     ApiEndpoint endpoint,
     Map<String, dynamic>? body, {
@@ -128,6 +147,111 @@ class ApiClient {
     return _requestJson(
       () => _dio.getUri(
         uri(endpoint, query: query),
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> patchJson(
+    ApiEndpoint endpoint,
+    Map<String, dynamic>? body, {
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.patchUri(
+        uri(endpoint),
+        data: body,
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteJson(
+    ApiEndpoint endpoint, {
+    Map<String, dynamic>? query,
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.deleteUri(
+        uri(endpoint, query: query),
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> postJsonRaw(
+    String path,
+    Map<String, dynamic>? body, {
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.postUri(
+        uriWithPath(path),
+        data: body,
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> getJsonRaw(
+    String path, {
+    Map<String, dynamic>? query,
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.getUri(
+        uriWithPath(path, query: query),
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> patchJsonRaw(
+    String path,
+    Map<String, dynamic>? body, {
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.patchUri(
+        uriWithPath(path),
+        data: body,
+        options: Options(
+          headers: _headers(accessToken),
+          extra: {'skipAuth': skipAuth},
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteJsonRaw(
+    String path, {
+    Map<String, dynamic>? query,
+    String? accessToken,
+    bool skipAuth = false,
+  }) async {
+    return _requestJson(
+      () => _dio.deleteUri(
+        uriWithPath(path, query: query),
         options: Options(
           headers: _headers(accessToken),
           extra: {'skipAuth': skipAuth},
