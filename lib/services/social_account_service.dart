@@ -72,6 +72,49 @@ class SocialAccountService {
     return _accountsFromResponse(response);
   }
 
+  Future<SocialAccount> disconnectAccount({
+    required String socialAccountId,
+  }) async {
+    final response = await _apiClient.postJsonRaw(
+      '/mobile/social-accounts/$socialAccountId/disconnect',
+      null,
+    );
+    final account = response['socialAccount'];
+    if (account is! Map<String, dynamic>) {
+      throw const ApiException('Backend did not return socialAccount');
+    }
+    return SocialAccount.fromJson(account);
+  }
+
+  Future<SocialConnectStart> reconnectAccount({
+    required String socialAccountId,
+  }) async {
+    final response = await _apiClient.postJsonRaw(
+      '/mobile/social-accounts/$socialAccountId/reconnect',
+      null,
+    );
+
+    final authUrl = response['authUrl'] as String?;
+    if (authUrl == null || authUrl.isEmpty) {
+      throw const ApiException('Backend did not return authUrl');
+    }
+
+    final state = response['state'] as String?;
+    if (state == null || state.isEmpty) {
+      throw const ApiException('Backend did not return connect state');
+    }
+
+    final launched = await launchUrl(
+      Uri.parse(authUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched) {
+      throw const ApiException('Could not open social reconnect browser');
+    }
+
+    return SocialConnectStart(state: state);
+  }
+
   List<SocialAccount> _accountsFromResponse(Map<String, dynamic> response) {
     final items = response['socialAccounts'] as List<dynamic>? ?? const [];
     return items

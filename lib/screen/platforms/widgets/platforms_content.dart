@@ -36,10 +36,12 @@ class PlatformsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final connectedPlatforms = accounts
-        .where((account) => account.isActive)
+        .where(isAccountReadyForPublishing)
         .map((account) => account.platform)
         .toSet()
         .length;
+    final followUpAccounts =
+        accounts.where((account) => followUpInfoForAccount(account) != null).toList();
 
     if (isLoading) {
       return const _PlatformsLoadingState();
@@ -80,6 +82,30 @@ class PlatformsContent extends StatelessWidget {
             onActionPressed: isSyncing ? null : onDone,
           ),
         ],
+        if (followUpAccounts.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          const _SectionHeader(
+            icon: Icons.rule_rounded,
+            title: 'Follow-up steps',
+            subtitle: 'Some providers need an extra selection after login.',
+          ),
+          const SizedBox(height: 8),
+          ...followUpAccounts.map((account) {
+            final info = followUpInfoForAccount(account)!;
+            final platformName = displayPlatformNameForBackend(account.platform);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _FollowUpCard(
+                platformName: platformName,
+                title: info.title,
+                message: info.message,
+                actionLabel: info.actionLabel,
+                icon: info.icon,
+                onActionPressed: () => onConnectTap(platformName),
+              ),
+            );
+          }),
+        ],
         if (connectedPlatforms == 0) ...[
           const SizedBox(height: 14),
           AppEmptyState(
@@ -103,6 +129,7 @@ class PlatformsContent extends StatelessWidget {
           final state = _stateForAccount(account);
           final title = account?.displayName ?? platformName;
           final subtitle = _subtitleFor(platformName, account);
+          final followUp = account == null ? null : followUpInfoForAccount(account);
           final isBusy =
               connectingPlatform == backendPlatformForName(platformName);
 
@@ -112,6 +139,10 @@ class PlatformsContent extends StatelessWidget {
               name: title,
               subtitle: subtitle,
               state: state,
+              actionLabel:
+                  followUp != null && state == PlatformConnectionState.actionNeeded
+                      ? followUp.actionLabel
+                      : null,
               icon: _PlatformAccountAvatar(
                 platformName: platformName,
                 imageUrl: account?.profilePictureUrl,
@@ -140,12 +171,16 @@ class PlatformsContent extends StatelessWidget {
 
   PlatformConnectionState _stateForAccount(SocialAccount? account) {
     if (account == null) return PlatformConnectionState.notConnected;
-    return account.isActive
-        ? PlatformConnectionState.connected
-        : PlatformConnectionState.actionNeeded;
+    if (!account.isActive) return PlatformConnectionState.actionNeeded;
+    return followUpInfoForAccount(account) != null
+        ? PlatformConnectionState.actionNeeded
+        : PlatformConnectionState.connected;
   }
 
   String _subtitleFor(String platformName, SocialAccount? account) {
+    final followUp = account == null ? null : followUpInfoForAccount(account);
+    if (followUp != null) return followUp.title;
+
     final username = account?.username;
     if (username != null && username.isNotEmpty) return '@$username';
     if (account != null && !account.isActive) return 'Reconnect needed';
@@ -238,6 +273,117 @@ class _PlatformsNotice extends StatelessWidget {
             child: Text(actionLabel),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FollowUpCard extends StatelessWidget {
+  final String platformName;
+  final String title;
+  final String message;
+  final String actionLabel;
+  final IconData icon;
+  final VoidCallback onActionPressed;
+
+  const _FollowUpCard({
+    required this.platformName,
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.icon,
+    required this.onActionPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: kCardBg,
+      borderRadius: BorderRadius.circular(homeRadiusLg),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: kBorderLight),
+          borderRadius: BorderRadius.circular(homeRadiusLg),
+          boxShadow: homeSoftShadow,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PlatformMark(name: platformName),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: kTextBlack,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: kTextGrey,
+                      fontSize: 12,
+                      height: 1.35,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _FollowUpAction(
+              icon: icon,
+              label: actionLabel,
+              onPressed: onActionPressed,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FollowUpAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _FollowUpAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: kBlue,
+        backgroundColor: kPillBg,
+        side: BorderSide(color: kBlue.withValues(alpha: 0.28)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(homeRadiusMd),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          fontFamily: 'Poppins',
+        ),
       ),
     );
   }

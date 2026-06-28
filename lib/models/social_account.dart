@@ -10,6 +10,7 @@ class SocialAccount {
     this.profilePictureUrl,
     this.profileUrl,
     this.platformAccountId,
+    this.platformMeta,
   });
 
   final String id;
@@ -22,6 +23,7 @@ class SocialAccount {
   final String? profilePictureUrl;
   final String? profileUrl;
   final String? platformAccountId;
+  final Map<String, dynamic>? platformMeta;
 
   factory SocialAccount.fromJson(Map<String, dynamic> json) {
     return SocialAccount(
@@ -35,6 +37,9 @@ class SocialAccount {
       profilePictureUrl: json['profilePictureUrl'] as String?,
       profileUrl: json['profileUrl'] as String?,
       platformAccountId: json['platformAccountId'] as String?,
+      platformMeta: json['platformMeta'] is Map<String, dynamic>
+          ? json['platformMeta'] as Map<String, dynamic>
+          : null,
     );
   }
 }

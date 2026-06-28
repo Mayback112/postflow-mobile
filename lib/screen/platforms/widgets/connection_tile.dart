@@ -8,6 +8,7 @@ class ConnectionTile extends StatelessWidget {
   final PlatformConnectionState state;
   final Widget icon;
   final bool isBusy;
+  final String? actionLabel;
   final VoidCallback onPressed;
 
   const ConnectionTile({
@@ -17,6 +18,7 @@ class ConnectionTile extends StatelessWidget {
     required this.state,
     required this.icon,
     this.isBusy = false,
+    this.actionLabel,
     required this.onPressed,
   });
 
@@ -64,7 +66,12 @@ class ConnectionTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          _StatusAction(state: state, isBusy: isBusy, onPressed: onPressed),
+          _StatusAction(
+            state: state,
+            isBusy: isBusy,
+            actionLabel: actionLabel,
+            onPressed: onPressed,
+          ),
         ],
       ),
     );
@@ -74,11 +81,13 @@ class ConnectionTile extends StatelessWidget {
 class _StatusAction extends StatelessWidget {
   final PlatformConnectionState state;
   final bool isBusy;
+  final String? actionLabel;
   final VoidCallback onPressed;
 
   const _StatusAction({
     required this.state,
     required this.isBusy,
+    required this.actionLabel,
     required this.onPressed,
   });
 
@@ -125,11 +134,12 @@ class _StatusAction extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : Text(
-              isConnected
-                  ? 'Connected'
-                  : isActionNeeded
-                  ? 'Reconnect'
-                  : 'Connect',
+              actionLabel ??
+                  (isConnected
+                      ? 'Connected'
+                      : isActionNeeded
+                      ? 'Reconnect'
+                      : 'Connect'),
             ),
     );
   }

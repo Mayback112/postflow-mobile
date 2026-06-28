@@ -89,6 +89,57 @@ class PlatformsController extends ChangeNotifier {
     }
   }
 
+  Future<void> disconnectAccount(String socialAccountId) async {
+    _isSyncing = true;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+
+    try {
+      await _socialAccountService.disconnectAccount(
+        socialAccountId: socialAccountId,
+      );
+      await _refreshAccountsWithoutLoading();
+      _isSyncing = false;
+      _successMessage = 'Social account disconnected.';
+      notifyListeners();
+    } catch (error) {
+      _isSyncing = false;
+      _errorMessage = _messageFor(error);
+      _successMessage = null;
+      notifyListeners();
+    }
+  }
+
+  Future<void> reconnectAccount(String socialAccountId) async {
+    final account = _accounts.firstWhere(
+      (item) => item.id == socialAccountId,
+      orElse: () => throw const ApiException('Social account not found'),
+    );
+
+    _connectingPlatform = account.platform;
+    _pendingConnectPlatform = account.platform;
+    _errorMessage = null;
+    _successMessage = null;
+    notifyListeners();
+
+    try {
+      final connectStart = await _socialAccountService.reconnectAccount(
+        socialAccountId: socialAccountId,
+      );
+      _pendingConnectState = connectStart.state;
+      _connectingPlatform = null;
+      notifyListeners();
+    } catch (error) {
+      _connectingPlatform = null;
+      _pendingConnectPlatform = null;
+      _pendingConnectState = null;
+      _errorMessage = _messageFor(error);
+      _successMessage = null;
+      notifyListeners();
+    }
+  }
+
   Future<void> handleConnectCallback(Uri uri) async {
     if (!_isSocialConnectCallback(uri)) {
       return;

@@ -3,6 +3,7 @@ import 'package:postflow/controllers/platforms_controller.dart';
 import 'package:postflow/models/social_account.dart';
 import 'package:postflow/models/social_connect_models.dart';
 import 'package:postflow/models/workspace.dart';
+import 'package:postflow/screen/platforms/platform_models.dart';
 import 'package:postflow/services/social_account_service.dart';
 import 'package:postflow/services/workspace_service.dart';
 
@@ -211,6 +212,28 @@ void main() {
 
     expect(result.status, SocialConnectStatus.success);
     expect(result.platform, 'INSTAGRAM');
+  });
+
+  test('detects provider follow-up steps from platform metadata', () {
+    const instagramNeedsPage = SocialAccount(
+      id: 'account-3',
+      workspaceId: 'workspace-1',
+      platform: 'INSTAGRAM',
+      displayName: 'Brand Instagram',
+      provider: 'ZERNIO',
+      isActive: true,
+      username: 'brand',
+      platformMeta: {
+        'provider': 'meta',
+        'requiresPageSelection': true,
+      },
+    );
+
+    final followUp = followUpInfoForAccount(instagramNeedsPage);
+
+    expect(followUp, isNotNull);
+    expect(followUp?.title, contains('Page'));
+    expect(followUp?.actionLabel, 'Continue setup');
   });
 }
 
